@@ -1,0 +1,1562 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+
+// ─── SAT WORD DATABASE (parsed from PDF) ───────────────────────────────────
+const SAT_WORDS = [
+  { word: "abase", type: "v.", meaning: "to humiliate, degrade", example: "After being overthrown and abased, the deposed leader offered to bow down to his conqueror." },
+  { word: "abate", type: "v.", meaning: "to reduce, lessen", example: "The rain poured down for a while, then abated." },
+  { word: "abdicate", type: "v.", meaning: "to give up a position, usually one of leadership", example: "When he realized that the revolutionaries would surely win, the king abdicated his throne." },
+  { word: "aberration", type: "n.", meaning: "something that differs from the norm", example: "In 1918, the Boston Red Sox won the World Series, but the success turned out to be an aberration." },
+  { word: "abet", type: "v.", meaning: "to aid, help, encourage", example: "The spy succeeded only because he had a friend on the inside to abet him." },
+  { word: "abhor", type: "v.", meaning: "to hate, detest", example: "Because he always wound up kicking himself in the head when he tried to play soccer, Oswald began to abhor the sport." },
+  { word: "abjure", type: "v.", meaning: "to reject, renounce", example: "To prove his honesty, the President abjured the evil policies of his wicked predecessor." },
+  { word: "abrogate", type: "v.", meaning: "to abolish, usually by authority", example: "The Bill of Rights assures that the government cannot abrogate our right to a free press." },
+  { word: "abscond", type: "v.", meaning: "to sneak away and hide", example: "In the confusion, the super-spy absconded into the night with the secret plans." },
+  { word: "absolution", type: "n.", meaning: "freedom from blame, guilt, sin", example: "Once all the facts were known, the jury gave Angela absolution by giving a verdict of not guilty." },
+  { word: "abstruse", type: "adj.", meaning: "hard to comprehend", example: "Everyone else in the class understood geometry easily, but John found the subject abstruse." },
+  { word: "accolade", type: "n.", meaning: "high praise, special distinction", example: "Everyone offered accolades to Sam after he won the Nobel Prize." },
+  { word: "acerbic", type: "adj.", meaning: "biting, bitter in tone or taste", example: "Jill became extremely acerbic and began to cruelly make fun of all her friends." },
+  { word: "acrimony", type: "n.", meaning: "bitterness, discord", example: "Biff and Trevor could not keep acrimony from overwhelming their friendship after they both fell in love with the lovely Teresa." },
+  { word: "acumen", type: "n.", meaning: "keen insight", example: "Because of his mathematical acumen, Larry was able to figure out in minutes problems that took other students hours." },
+  { word: "adamant", type: "adj.", meaning: "impervious, immovable, unyielding", example: "Though public pressure was intense, the President remained adamant about his proposal." },
+  { word: "adept", type: "adj.", meaning: "extremely skilled", example: "Tarzan was adept at jumping from tree to tree like a monkey." },
+  { word: "admonish", type: "v.", meaning: "to caution, criticize, reprove", example: "Joe's mother admonished him not to ruin his appetite by eating cookies before dinner." },
+  { word: "adroit", type: "adj.", meaning: "skillful, dexterous", example: "The adroit thief could pick someone's pocket without attracting notice." },
+  { word: "adulation", type: "n.", meaning: "extreme praise", example: "Though the book was pretty good, Marcy did not believe it deserved the adulation it received." },
+  { word: "adverse", type: "adj.", meaning: "antagonistic, unfavorable, dangerous", example: "Because of adverse conditions, the hikers decided to give up trying to climb the mountain." },
+  { word: "aesthetic", type: "adj.", meaning: "artistic, related to the appreciation of beauty", example: "We hired Susan as our interior decorator because she has such a fine aesthetic sense." },
+  { word: "affable", type: "adj.", meaning: "friendly, amiable", example: "People like to be around George because he is so affable and good-natured." },
+  { word: "affinity", type: "n.", meaning: "a spontaneous feeling of closeness", example: "Jerry didn't know why, but he felt an incredible affinity for Kramer the first time they met." },
+  { word: "alacrity", type: "n.", meaning: "eagerness, speed", example: "Chuck loved to help his mother whenever he could, so when his mother asked him to set the table he did so with alacrity." },
+  { word: "allay", type: "v.", meaning: "to soothe, ease", example: "The chairman of the Federal Reserve gave a speech to try to allay investors' fears about an economic downturn." },
+  { word: "alleviate", type: "v.", meaning: "to relieve, make more bearable", example: "This drug will alleviate the symptoms of the terrible disease, but only for a while." },
+  { word: "aloof", type: "adj.", meaning: "reserved, distant", example: "The scientist could sometimes seem aloof, but really he was just thinking about quantum mechanics." },
+  { word: "amalgamate", type: "v.", meaning: "to bring together, unite", example: "Because of his great charisma, the presidential candidate was able to amalgamate all democrats and republicans under his banner." },
+  { word: "ambiguous", type: "adj.", meaning: "uncertain, variably interpretable", example: "Some people think Caesar married Cleopatra for her power, others believe he was charmed by her beauty. His actual reasons are ambiguous." },
+  { word: "ambivalent", type: "adj.", meaning: "having opposing feelings", example: "My feelings about Calvin are ambivalent because on one hand he is a loyal friend, but on the other, he is a cruel and vicious thief." },
+  { word: "ameliorate", type: "v.", meaning: "to improve", example: "The tense situation was ameliorated when Sam proposed a solution everyone could agree upon." },
+  { word: "amiable", type: "adj.", meaning: "friendly", example: "An amiable fellow, Harry got along with just about everyone." },
+  { word: "amorphous", type: "adj.", meaning: "without definite shape or type", example: "The effort was doomed from the start, because the reasons behind it were so amorphous and hard to pin down." },
+  { word: "anachronistic", type: "adj.", meaning: "being out of correct chronological order", example: "In this book you're writing, you say that the Pyramids were built after the Titanic sank, which is anachronistic." },
+  { word: "analogous", type: "adj.", meaning: "similar to, so that an analogy can be drawn", example: "Though they are unrelated genetically, the bone structure of whales and fish is quite analogous." },
+  { word: "anathema", type: "n.", meaning: "a cursed, detested person", example: "I never want to see that murderer. He is an anathema to me." },
+  { word: "anomaly", type: "n.", meaning: "something that does not fit into the normal order", example: "That rip in the space-time continuum is certainly a spatial anomaly." },
+  { word: "antagonism", type: "n.", meaning: "hostility", example: "Superman and Bizarro Superman shared a mutual antagonism, and often fought." },
+  { word: "antipathy", type: "n.", meaning: "a strong dislike, repugnance", example: "I know you love me, but because you are a liar and a thief, I feel nothing but antipathy for you." },
+  { word: "antiquated", type: "adj.", meaning: "old, out of date", example: "That antiquated car has none of the features that make modern cars so great." },
+  { word: "antithesis", type: "n.", meaning: "the absolute opposite", example: "Your values are the antithesis of my pacifist beliefs." },
+  { word: "apathetic", type: "adj.", meaning: "lacking concern, emotion", example: "Uninterested in politics, Bruno was apathetic about whether he lived under a capitalist or communist regime." },
+  { word: "apocryphal", type: "adj.", meaning: "fictitious, false, wrong", example: "Because I am standing before you, it seems obvious that the stories circulating about my demise were apocryphal." },
+  { word: "appease", type: "v.", meaning: "to calm, satisfy", example: "When the child cries, the mother gives him candy to appease him." },
+  { word: "arbitrary", type: "adj.", meaning: "based on factors that appear random", example: "The boy's decision to choose one college over another seems arbitrary." },
+  { word: "arcane", type: "adj.", meaning: "obscure, secret, known only by a few", example: "The professor is an expert in arcane Lithuanian literature." },
+  { word: "archaic", type: "adj.", meaning: "of or relating to an earlier period in time, outdated", example: "In a few select regions of Western Mongolia, an archaic Chinese dialect is still spoken." },
+  { word: "ardor", type: "n.", meaning: "extreme vigor, energy, enthusiasm", example: "The soldiers conveyed their ardor with impassioned battle cries." },
+  { word: "arrogate", type: "v.", meaning: "to take without justification", example: "The king arrogated the right to order executions to himself exclusively." },
+  { word: "ascertain", type: "v.", meaning: "to perceive, learn", example: "With a bit of research, the student ascertained that some plants can live for weeks without water." },
+  { word: "ascetic", type: "adj.", meaning: "practicing restraint as a means of self-discipline", example: "The priest lives an ascetic life devoid of television, savory foods, and other pleasures." },
+  { word: "assiduous", type: "adj.", meaning: "hard-working, diligent", example: "The construction workers erected the skyscraper during two years of assiduous labor." },
+  { word: "assuage", type: "v.", meaning: "to ease, pacify", example: "The mother held the baby to assuage its fears." },
+  { word: "astute", type: "adj.", meaning: "very clever, crafty", example: "Much of Roger's success in politics results from his ability to provide astute answers to reporters' questions." },
+  { word: "atrophy", type: "v.", meaning: "to wither away, decay", example: "If muscles do not receive enough blood, they will soon atrophy and die." },
+  { word: "audacious", type: "adj.", meaning: "excessively bold", example: "The security guard was shocked by the fan's audacious attempt to offer him a bribe." },
+  { word: "augment", type: "v.", meaning: "to add to, expand", example: "The eager student seeks to augment his knowledge of French vocabulary by reading French literature." },
+  { word: "auspicious", type: "adj.", meaning: "favorable, indicative of good things", example: "The tennis player considered the sunny forecast an auspicious sign that she would win her match." },
+  { word: "austere", type: "adj.", meaning: "very bare, bleak", example: "The austere furniture inside the abandoned house made the place feel haunted." },
+  { word: "avarice", type: "n.", meaning: "excessive greed", example: "The banker's avarice led him to amass a tremendous personal fortune." },
+  { word: "aversion", type: "n.", meaning: "a particular dislike for something", example: "Because he's from Hawaii, Ben has an aversion to autumn, winter, and cold climates in general." },
+  { word: "banal", type: "adj.", meaning: "dull, commonplace", example: "The client rejected our proposal because they found our presentation banal and unimpressive." },
+  { word: "behemoth", type: "n.", meaning: "something of tremendous power or size", example: "The new aircraft carrier is among several behemoths that the Air Force has added to its fleet." },
+  { word: "benevolent", type: "adj.", meaning: "marked by goodness or doing good", example: "Police officers should be commended for their benevolent service to the community." },
+  { word: "benign", type: "adj.", meaning: "favorable, not threatening, mild", example: "We were all relieved to hear that the medical tests determined her tumor to be benign." },
+  { word: "berate", type: "v.", meaning: "to scold vehemently", example: "The angry boss berated his employees for failing to meet their deadline." },
+  { word: "bombastic", type: "adj.", meaning: "excessively confident, pompous", example: "The singer's bombastic performance disgusted the crowd." },
+  { word: "brazen", type: "adj.", meaning: "excessively bold, brash", example: "Critics condemned the novelist's brazen attempt to plagiarize Hemingway's story." },
+  { word: "brusque", type: "adj.", meaning: "short, abrupt, dismissive", example: "The captain's brusque manner offended the passengers." },
+  { word: "cacophony", type: "n.", meaning: "tremendous noise, disharmonious sound", example: "The elementary school orchestra created a cacophony at the recital." },
+  { word: "cajole", type: "v.", meaning: "to urge, coax", example: "Fred's buddies cajoled him into attending the bachelor party." },
+  { word: "calamity", type: "n.", meaning: "an event with disastrous consequences", example: "The earthquake in San Francisco was a calamity worse than any other natural disaster in history." },
+  { word: "callous", type: "adj.", meaning: "harsh, cold, unfeeling", example: "The murderer's callous lack of remorse shocked the jury." },
+  { word: "calumny", type: "n.", meaning: "an attempt to spoil someone else's reputation by spreading lies", example: "The local official's calumny ended up ruining his opponent's prospect of winning the election." },
+  { word: "candor", type: "n.", meaning: "honesty, frankness", example: "We were surprised by the candor of the mayor's speech because he is usually rather evasive." },
+  { word: "capricious", type: "adj.", meaning: "subject to whim, fickle", example: "The young girl's capricious tendencies made it difficult for her to focus on achieving her goals." },
+  { word: "caustic", type: "adj.", meaning: "bitter, biting, acidic", example: "The politicians exchanged caustic insults for over an hour during the debate." },
+  { word: "censure", type: "v.", meaning: "to rebuke formally", example: "The principal censured the head of the English Department for forcing students to learn esoteric vocabulary." },
+  { word: "cerebral", type: "adj.", meaning: "related to the intellect", example: "The books we read in this class are too cerebral—they don't engage my emotions at all." },
+  { word: "chastise", type: "v.", meaning: "to criticize severely", example: "After being chastised by her peers for mimicking Britney Spears, Miranda dyed her hair black." },
+  { word: "circuitous", type: "adj.", meaning: "roundabout", example: "The bus's circuitous route took us through numerous outlying suburbs." },
+  { word: "circumspect", type: "adj.", meaning: "cautious", example: "It would have been more circumspect not to have specified a time." },
+  { word: "circumvent", type: "v.", meaning: "to get around", example: "The school's dress code was circumvented by the determined students." },
+  { word: "clandestine", type: "adj.", meaning: "secret", example: "Announcing to her boyfriend that she was going to the gym, Sophie actually went to meet Joseph for a clandestine liaison." },
+  { word: "clemency", type: "n.", meaning: "mercy", example: "After he forgot their anniversary, Martin could only beg Maria for clemency." },
+  { word: "coerce", type: "v.", meaning: "to make somebody do something by force or threat", example: "The court decided that Vanilla Ice did not have to honor the contract because he had been coerced into signing it." },
+  { word: "cogent", type: "adj.", meaning: "intellectually convincing", example: "Irene's arguments in favor of abstinence were so cogent that I could not resist them." },
+  { word: "coherent", type: "adj.", meaning: "logically consistent, intelligible", example: "Renee could not figure out what Monroe had seen because he was too distraught to deliver a coherent statement." },
+  { word: "collusion", type: "n.", meaning: "secret agreement, conspiracy", example: "The three law students worked in collusion to steal the final exam." },
+  { word: "complacency", type: "n.", meaning: "self-satisfied ignorance of danger", example: "Colin tried to shock his friends out of their complacency by painting a frightening picture of what might happen to them." },
+  { word: "complicit", type: "adj.", meaning: "being an accomplice in a wrongful act", example: "By keeping her daughter's affair a secret, Maddie became complicit in it." },
+  { word: "conciliate", type: "v.", meaning: "to make more friendly, to appease", example: "Amanda's invitation to dinner was a very conciliatory gesture." },
+  { word: "condone", type: "v.", meaning: "to pardon, deliberately overlook", example: "He refused to condone his brother's crime." },
+  { word: "confound", type: "v.", meaning: "to frustrate, confuse", example: "MacGuyver confounded the policemen pursuing him by covering his tracks." },
+  { word: "contentious", type: "adj.", meaning: "having a tendency to quarrel or dispute", example: "George's contentious personality made him unpopular with his classmates." },
+  { word: "contrite", type: "adj.", meaning: "penitent, eager to be forgiven", example: "Blake's contrite behavior made it impossible to stay angry at him." },
+  { word: "convoluted", type: "adj.", meaning: "intricate, complicated", example: "Grace's story was so convoluted that I couldn't follow it." },
+  { word: "copious", type: "adj.", meaning: "profuse, abundant", example: "Copious amounts of Snapple were imbibed in the cafeteria." },
+  { word: "corroborate", type: "v.", meaning: "to support with evidence", example: "Luke's seemingly outrageous claim was corroborated by witnesses." },
+  { word: "culpable", type: "adj.", meaning: "deserving blame", example: "He was culpable of the crime, and was sentenced to perform community service for 75 years." },
+  { word: "daunting", type: "adj.", meaning: "intimidating, causing one to lose courage", example: "He kept delaying the daunting act of asking for a promotion." },
+  { word: "dearth", type: "n.", meaning: "a lack, scarcity", example: "An eager reader, she was dismayed by the dearth of classic books at the library." },
+  { word: "debunk", type: "v.", meaning: "to expose the falseness of something", example: "He debunked her claim to be the world's greatest chess player by defeating her in 18 consecutive matches." },
+  { word: "decorous", type: "adj.", meaning: "socially proper, appropriate", example: "The appreciative guest displayed decorous behavior toward his host." },
+  { word: "defer", type: "v.", meaning: "to postpone something; to yield to another's wisdom", example: "Ron deferred to Diane, the expert on musical instruments, when he was asked about buying a piano." },
+  { word: "deleterious", type: "adj.", meaning: "harmful", example: "She experienced the deleterious effects of running a marathon without stretching her muscles." },
+  { word: "delineate", type: "v.", meaning: "to describe, outline, shed light on", example: "She neatly delineated her reasons for canceling the project's funding." },
+  { word: "demagogue", type: "n.", meaning: "a leader who appeals to a people's prejudices", example: "The demagogue strengthened his hold over his people by blaming immigrants for the lack of jobs." },
+  { word: "denigrate", type: "v.", meaning: "to belittle, diminish the opinion of", example: "The company decided that its advertisements would no longer denigrate the company's competitors." },
+  { word: "deplorable", type: "adj.", meaning: "deserving strong condemnation", example: "We all deplored the miserable working conditions in the factory." },
+  { word: "deprecate", type: "v.", meaning: "to belittle, depreciate", example: "Always over-modest, he deprecated his contribution to the local charity." },
+  { word: "deride", type: "v.", meaning: "to laugh at mockingly, scorn", example: "The bullies derided the foreign student's accent." },
+  { word: "despondent", type: "adj.", meaning: "feeling depressed, discouraged, hopeless", example: "Having failed the first math test, the despondent child saw no use in studying for the next." },
+  { word: "devious", type: "adj.", meaning: "not straightforward, deceitful", example: "Not wanting to be punished, the devious girl blamed the broken vase on the cat." },
+  { word: "didactic", type: "adj.", meaning: "intended to instruct", example: "She wrote up a didactic document showing new employees how to handle the company's customers." },
+  { word: "diffident", type: "adj.", meaning: "shy, quiet, modest", example: "While eating dinner with the adults, the diffident youth did not speak for fear of seeming presumptuous." },
+  { word: "diligent", type: "adj.", meaning: "showing care in doing one's work", example: "The diligent researcher made sure to check her measurements multiple times." },
+  { word: "discern", type: "v.", meaning: "to perceive, detect", example: "Though he hid his emotions, she discerned from his body language that he was angry." },
+  { word: "discreet", type: "adj.", meaning: "being reserved in speech or action; showing good judgment", example: "The doctor used discretion in deciding how much to tell the patient about his condition." },
+  { word: "disparage", type: "v.", meaning: "to criticize or speak ill of", example: "The saleswoman disparaged the competitor's products to persuade her customers." },
+  { word: "dissent", type: "n.", meaning: "the act of disagreeing", example: "Unconvinced that the defendant was guilty, the last juror voiced his dissent with the rest of the jury." },
+  { word: "dissuade", type: "v.", meaning: "to persuade someone not to do something", example: "Worried that he would catch a cold, she tried to dissuade him from going out on winter nights." },
+  { word: "dogmatic", type: "adj.", meaning: "aggressively and arrogantly certain about unproved principles", example: "His dogmatic claim that men were better than women at fixing appliances angered everyone." },
+  { word: "duplicity", type: "n.", meaning: "crafty dishonesty", example: "His duplicity involved convincing his employees to let him lower their salaries, then stealing the savings." },
+  { word: "ebullient", type: "adj.", meaning: "extremely lively, enthusiastic", example: "She became ebullient upon receiving an acceptance letter from her first-choice college." },
+  { word: "eclectic", type: "adj.", meaning: "consisting of a diverse variety of elements", example: "That bar attracts an eclectic crowd: lawyers, artists, circus clowns, and investment bankers." },
+  { word: "efface", type: "v.", meaning: "to wipe out, obliterate, rub away", example: "The husband was so angry at his wife for leaving him that he effaced all evidence of her presence." },
+  { word: "effervescent", type: "adj.", meaning: "bubbly, lively", example: "My friend is so effervescent that she makes everyone smile." },
+  { word: "egregious", type: "adj.", meaning: "extremely bad", example: "The student who threw sloppy joes across the cafeteria was punished for his egregious behavior." },
+  { word: "elicit", type: "v.", meaning: "to bring forth, draw out, evoke", example: "Although I asked several times where the exit was, I elicited no response from the stone-faced policeman." },
+  { word: "eloquent", type: "adj.", meaning: "expressive, articulate, moving", example: "The priest gave such an eloquent sermon that most churchgoers were crying." },
+  { word: "emulate", type: "v.", meaning: "to imitate", example: "I idolize Britney Spears so much that I emulate everything she does." },
+  { word: "enervate", type: "v.", meaning: "to weaken, exhaust", example: "Writing these sentences enervates me so much that I will have to take a nap after I finish." },
+  { word: "enigmatic", type: "adj.", meaning: "mystifying, cryptic", example: "That man wearing the dark suit and dark glasses is so enigmatic that no one even knows his name." },
+  { word: "enmity", type: "n.", meaning: "ill will, hatred, hostility", example: "Mark and Andy have clearly not forgiven each other, because the enmity between them is obvious." },
+  { word: "ephemeral", type: "adj.", meaning: "short-lived, fleeting", example: "She promised she'd love me forever, but her 'forever' was only ephemeral: she left me after one week." },
+  { word: "equanimity", type: "n.", meaning: "composure", example: "Even though he had just been fired, Mr. Simms showed great equanimity by neatly packing up his desk." },
+  { word: "equivocal", type: "adj.", meaning: "ambiguous, uncertain, undecided", example: "His intentions were so equivocal that I didn't know whether he was being chivalrous or sleazy." },
+  { word: "erudite", type: "adj.", meaning: "learned", example: "My Latin teacher is such an erudite scholar that he has translated some of the most difficult ancient poetry." },
+  { word: "esoteric", type: "adj.", meaning: "understood by only a select few", example: "Even the most advanced students cannot understand the physicist's esoteric theories." },
+  { word: "ethereal", type: "adj.", meaning: "heavenly, exceptionally delicate or refined", example: "In her flowing silk gown and lace veil, the bride looked ethereal." },
+  { word: "euphoric", type: "adj.", meaning: "elated, uplifted", example: "I was euphoric when I found out that my sister had given birth to twins." },
+  { word: "evanescent", type: "adj.", meaning: "fleeting, momentary", example: "My joy at getting promoted was evanescent because I discovered that I would have to work much longer hours." },
+  { word: "exacerbate", type: "v.", meaning: "to make more violent, intense", example: "The gruesome and scary movie I saw last night exacerbated my fears of the dark." },
+  { word: "exculpate", type: "v.", meaning: "to free from guilt or blame, exonerate", example: "My discovery of the ring behind the dresser exculpated me from the charge of having stolen it." },
+  { word: "expedient", type: "adj.", meaning: "advisable, advantageous, serving one's self-interest", example: "In his bid for reelection, the governor made an expedient move by tabling all controversial legislation." },
+  { word: "extol", type: "v.", meaning: "to praise, revere", example: "Violet extolled the virtues of a vegetarian diet to her meat-loving brother." },
+  { word: "fabricate", type: "v.", meaning: "to make up, invent", example: "When I arrived an hour late to class, I fabricated some excuse about my car breaking down." },
+  { word: "fallacious", type: "adj.", meaning: "incorrect, misleading", example: "Emily offered me cigarettes on the fallacious assumption that I smoked." },
+  { word: "fastidious", type: "adj.", meaning: "meticulous, demanding, having high standards", example: "Mark is so fastidious that he is never able to finish a project because it always seems imperfect to him." },
+  { word: "fecund", type: "adj.", meaning: "fruitful, fertile", example: "The fecund tree bore enough apples to last us through the entire season." },
+  { word: "fervent", type: "adj.", meaning: "ardent, passionate", example: "The fervent protestors chained themselves to the building and shouted all night long." },
+  { word: "fidelity", type: "n.", meaning: "loyalty, devotion", example: "Guard dogs are known for the great fidelity they show toward their masters." },
+  { word: "flagrant", type: "adj.", meaning: "offensive, egregious", example: "The judge's decision to set the man free simply because that man was his brother was a flagrant abuse of power." },
+  { word: "forbearance", type: "n.", meaning: "patience, restraint, toleration", example: "The doctor showed great forbearance in calming down the angry patient who shouted insults at him." },
+  { word: "fortitude", type: "n.", meaning: "strength, guts", example: "Achilles' fortitude in battle is legendary." },
+  { word: "fortuitous", type: "adj.", meaning: "happening by chance, often lucky or fortunate", example: "After looking for Manuel and not finding him at home, Harriet had a fortuitous encounter with him at the post office." },
+  { word: "frugal", type: "adj.", meaning: "thrifty, economical", example: "Richard is so frugal that his diet consists almost exclusively of catfish and chicken liver." },
+  { word: "garrulous", type: "adj.", meaning: "talkative, wordy", example: "Some talk show hosts are so garrulous that their guests can't get a word in edgewise." },
+  { word: "grandiose", type: "adj.", meaning: "on a magnificent or exaggerated scale", example: "Margaret planned a grandiose party, replete with elephants, trapeze artists, and clowns." },
+  { word: "gratuitous", type: "adj.", meaning: "uncalled for, unwarranted", example: "Every morning the guy at the donut shop gives me a gratuitous helping of ketchup packets." },
+  { word: "gregarious", type: "adj.", meaning: "drawn to the company of others, sociable", example: "Well, if you're not gregarious, I don't know why you would want to go to a singles party!" },
+  { word: "hackneyed", type: "adj.", meaning: "unoriginal, trite", example: "A girl can only hear 'I love you' so many times before it begins to sound hackneyed and meaningless." },
+  { word: "hapless", type: "adj.", meaning: "unlucky", example: "My poor, hapless family never seems to pick a sunny week to go on vacation." },
+  { word: "harangue", type: "n.", meaning: "a ranting speech", example: "Everyone had heard the teacher's harangue about gum chewing in class before." },
+  { word: "haughty", type: "adj.", meaning: "disdainfully proud", example: "The superstar's haughty dismissal of her costars will backfire on her someday." },
+  { word: "hegemony", type: "n.", meaning: "domination over others", example: "Britain's hegemony over its colonies was threatened once nationalist sentiment began to spread around the world." },
+  { word: "heinous", type: "adj.", meaning: "shockingly wicked, repugnant", example: "The killings were made all the more heinous by the fact that the murderer first tortured his victims for three days." },
+  { word: "hiatus", type: "n.", meaning: "a break or gap in duration or continuity", example: "The hiatus in service should last two or three months—until the cable lines are repaired." },
+  { word: "iconoclast", type: "n.", meaning: "one who attacks common beliefs or institutions", example: "Jane goes to one protest after another, but she seems to be an iconoclast rather than an activist with a progressive agenda." },
+  { word: "idiosyncratic", type: "adj.", meaning: "peculiar to one person; highly individualized", example: "Because your mistakes were highly idiosyncratic, I'm going to deny your request that the class be given a new test." },
+  { word: "ignominious", type: "adj.", meaning: "humiliating, disgracing", example: "It was really ignominious to be kicked out of the dorm for having an illegal gas stove in my room." },
+  { word: "illicit", type: "adj.", meaning: "forbidden, not permitted", example: "The fourth-grader learned many illicit words from a pamphlet that was being passed around school." },
+  { word: "impassive", type: "adj.", meaning: "stoic, not susceptible to suffering", example: "Stop being so impassive; it's healthy to cry every now and then." },
+  { word: "imperious", type: "adj.", meaning: "commanding, domineering", example: "The imperious nature of your manner led me to dislike you at once." },
+  { word: "impetuous", type: "adj.", meaning: "rash; hastily done", example: "Hilda's hasty slaying of the king was an impetuous, thoughtless action." },
+  { word: "implacable", type: "adj.", meaning: "incapable of being appeased or mitigated", example: "Watch out: once you shun Grandma's cooking, she is totally implacable." },
+  { word: "implicit", type: "adj.", meaning: "understood but not outwardly obvious, implied", example: "I know Professor Smith didn't actually say not to write from personal experience, but I think such a message was implicit." },
+  { word: "impudent", type: "adj.", meaning: "casually rude, insolent, impertinent", example: "The impudent young man told the princess she was hot even though she hadn't asked him." },
+  { word: "inane", type: "adj.", meaning: "silly and meaningless", example: "Some films are so inane that the psychology of the characters makes absolutely no sense." },
+  { word: "incisive", type: "adj.", meaning: "clear, sharp, direct", example: "The discussion wasn't going anywhere until her incisive comment allowed everyone to see what the true issues were." },
+  { word: "indefatigable", type: "adj.", meaning: "incapable of defeat, failure, decay", example: "Even after traveling 62 miles, the indefatigable runner kept on moving." },
+  { word: "indigenous", type: "adj.", meaning: "originating in a region", example: "Some fear that these plants, which are not indigenous to the region, may choke out the native vegetation." },
+  { word: "indolent", type: "adj.", meaning: "lazy", example: "Why should my indolent children, who can't even pick themselves up off the couch to pour their own juice, be rewarded?" },
+  { word: "ineffable", type: "adj.", meaning: "unspeakable, incapable of being expressed through words", example: "It is said that the experience of playing with a dolphin is ineffable." },
+  { word: "inexorable", type: "adj.", meaning: "incapable of being persuaded or placated", example: "Although I begged for hours, Mom was inexorable and refused to let me stay out all night after the prom." },
+  { word: "infamy", type: "n.", meaning: "notoriety, extreme ill repute", example: "The infamy of his crime will not lessen as the decades pass." },
+  { word: "ingenious", type: "adj.", meaning: "clever, resourceful", example: "Her ingenious use of walnuts instead of peanuts was lauded by the other garden club members." },
+  { word: "ingenuous", type: "adj.", meaning: "not devious; innocent and candid", example: "He must have writers, but his speeches seem so ingenuous it's hard to believe he's not speaking from his own heart." },
+  { word: "inimical", type: "adj.", meaning: "hostile, enemylike", example: "I don't see how I could ever work for a company that was so cold and inimical to me during my interviews." },
+  { word: "innate", type: "adj.", meaning: "inborn, native, inherent", example: "His incredible athletic talent is innate, he never trains, lifts weights, or practices." },
+  { word: "insidious", type: "adj.", meaning: "appealing but imperceptibly harmful, seductive", example: "Lisa's insidious chocolate cake tastes so good but makes you feel so sick later on!" },
+  { word: "insipid", type: "adj.", meaning: "dull, boring", example: "The play was so insipid, I fell asleep halfway through." },
+  { word: "intransigent", type: "adj.", meaning: "refusing to compromise", example: "The intransigent child said he would have 12 scoops of ice cream, or he would bang his head against the wall." },
+  { word: "intrepid", type: "adj.", meaning: "brave in the face of danger", example: "After scaling a live volcano prior to its eruption, the explorer was praised for his intrepid attitude." },
+  { word: "inveterate", type: "adj.", meaning: "stubbornly established by habit", example: "I'm the first to admit that I'm an inveterate coffee drinker—I drink four cups a day." },
+  { word: "irascible", type: "adj.", meaning: "easily angered", example: "At the smallest provocation, my irascible cat will begin scratching and clawing." },
+  { word: "jubilant", type: "adj.", meaning: "extremely joyful, happy", example: "The crowd was jubilant when the firefighter carried the woman from the flaming building." },
+  { word: "judicious", type: "adj.", meaning: "having or exercising sound judgment", example: "When the judicious king decided to compromise rather than send his army to its certain death, he was applauded." },
+  { word: "laconic", type: "adj.", meaning: "terse in speech or writing", example: "The author's laconic style has won him many followers who dislike wordiness." },
+  { word: "languid", type: "adj.", meaning: "sluggish from fatigue or weakness", example: "In the summer months, the great heat makes people languid and lazy." },
+  { word: "laudatory", type: "adj.", meaning: "expressing admiration or praise", example: "Such laudatory comments are unusual from someone who is usually so reserved in his opinions." },
+  { word: "lenient", type: "adj.", meaning: "demonstrating tolerance or gentleness", example: "Because Professor Oglethorpe allowed his students to choose their final grades, the other teachers believed that he was excessively lenient." },
+  { word: "lethargic", type: "adj.", meaning: "in a state of sluggishness or apathy", example: "When Jean Claude explained to his boss that he was lethargic and didn't feel like working that day, the boss fired him." },
+  { word: "licentious", type: "adj.", meaning: "displaying a lack of moral or legal restraints", example: "Marilee has always been fascinated by the licentious private lives of politicians." },
+  { word: "lucid", type: "adj.", meaning: "clear, easily understandable", example: "Because Guenevere's essay was so lucid, I only had to read it once to understand her reasoning." },
+  { word: "magnanimous", type: "adj.", meaning: "noble, generous", example: "Although I had already broken most of her dishes, Jacqueline was magnanimous enough to continue letting me use them." },
+  { word: "malevolent", type: "adj.", meaning: "wanting harm to befall others", example: "The malevolent old man sat in the park all day, tripping unsuspecting passersby with his cane." },
+  { word: "malleable", type: "adj.", meaning: "capable of being shaped or transformed", example: "Maximillian's political opinions were so malleable that anyone he talked to was able to change his mind instantly." },
+  { word: "maudlin", type: "adj.", meaning: "weakly sentimental", example: "Although many people enjoy romantic comedies, I usually find them maudlin and shallow." },
+  { word: "maverick", type: "n.", meaning: "an independent, nonconformist person", example: "Andreas is a real maverick and always does things his own way." },
+  { word: "mendacious", type: "adj.", meaning: "having a lying, false character", example: "The mendacious content of the tabloid magazines is at least entertaining." },
+  { word: "mercurial", type: "adj.", meaning: "characterized by rapid change or temperamentality", example: "Though he was widely respected for his mathematical proofs, the mercurial genius was impossible to live with." },
+  { word: "meticulous", type: "adj.", meaning: "extremely careful with details", example: "The ornate needlework in the bride's gown was a product of meticulous handiwork." },
+  { word: "mitigate", type: "v.", meaning: "to make less violent, alleviate", example: "When I had an awful sore throat, only warm tea would mitigate the pain." },
+  { word: "mollify", type: "v.", meaning: "to soften in temper", example: "The police officer mollified the angry woman by giving her a warning instead of a ticket." },
+  { word: "morose", type: "adj.", meaning: "gloomy or sullen", example: "Jason's morose nature made him very unpleasant to talk to." },
+  { word: "mundane", type: "adj.", meaning: "concerned with the world rather than with heaven, commonplace", example: "He is more concerned with the mundane issues of day-to-day life than with spiritual topics." },
+  { word: "myriad", type: "adj.", meaning: "consisting of a very great number", example: "It was difficult to decide what to do Friday night because the city presented us with myriad possibilities for fun." },
+  { word: "nadir", type: "n.", meaning: "the lowest point of something", example: "My day was boring, but the nadir came when I accidentally spilled a bowl of spaghetti on my head." },
+  { word: "nascent", type: "adj.", meaning: "in the process of being born or coming into existence", example: "Unfortunately, my brilliant paper was only in its nascent form on the morning that it was due." },
+  { word: "nebulous", type: "adj.", meaning: "vaguely defined, cloudy", example: "The transition between governments meant that who was actually in charge was a nebulous matter." },
+  { word: "nefarious", type: "adj.", meaning: "heinously villainous", example: "Although Dr. Meanman's nefarious plot to melt the polar icecaps was terrifying, nobody really worried about it." },
+  { word: "nonchalant", type: "adj.", meaning: "having a lack of concern, indifference", example: "Although deep down she was very angry, Marsha acted in a nonchalant manner when she found out." },
+  { word: "notorious", type: "adj.", meaning: "widely and unfavorably known", example: "Jacob was notorious for always arriving late at parties." },
+  { word: "noxious", type: "adj.", meaning: "harmful, unwholesome", example: "Environmentalists showed that the noxious weeds were destroying the insects' natural habitats." },
+  { word: "obdurate", type: "adj.", meaning: "unyielding to persuasion or moral influences", example: "The obdurate old man refused to take pity on the kittens." },
+  { word: "obsequious", type: "adj.", meaning: "excessively compliant or submissive", example: "Mark acted like Janet's servant, obeying her every request in an obsequious manner." },
+  { word: "obsolete", type: "adj.", meaning: "no longer used, out of date", example: "With the inventions of tape decks and CDs, eight-track players are now entirely obsolete." },
+  { word: "obstinate", type: "adj.", meaning: "not yielding easily, stubborn", example: "The obstinate child refused to leave the store until his mother bought him a candy bar." },
+  { word: "obtuse", type: "adj.", meaning: "lacking quickness of sensibility or intellect", example: "Political opponents warned that the prime minister's obtuse approach to foreign policy would embroil the nation in mindless war." },
+  { word: "odious", type: "adj.", meaning: "instilling hatred or intense displeasure", example: "Mark was assigned the odious task of cleaning the cat's litter box." },
+  { word: "ominous", type: "adj.", meaning: "foreboding or foreshadowing evil", example: "The fortuneteller's ominous words flashed through my mind as the hooded figure approached me in the alley." },
+  { word: "onerous", type: "adj.", meaning: "burdensome", example: "My parents lamented that the pleasures of living in a beautiful country estate no longer outweighed the onerous mortgage payments." },
+  { word: "opulent", type: "adj.", meaning: "characterized by rich abundance verging on ostentation", example: "The opulent furnishings of the dictator's private compound contrasted harshly with the meager accommodations of her subjects." },
+  { word: "orthodox", type: "adj.", meaning: "conventional, conforming to established protocol", example: "The company's profits dwindled because the management pursued orthodox business policies that were incompatible with new industrial trends." },
+  { word: "ostentatious", type: "adj.", meaning: "excessively showy, glitzy", example: "On the palace tour, the guide focused on the ostentatious decorations and spoke little of the royal family's history." },
+  { word: "ostracism", type: "n.", meaning: "exclusion from a group", example: "Beth risked ostracism if her roommates discovered her flatulence." },
+  { word: "palatable", type: "adj.", meaning: "agreeable to the taste or sensibilities", example: "Despite the unpleasant smell, the exotic cheese was quite palatable." },
+  { word: "palliate", type: "v.", meaning: "to reduce the severity of", example: "The doctor trusted that the new medication would palliate her patient's discomfort." },
+  { word: "panacea", type: "n.", meaning: "a remedy for all ills or difficulties", example: "Doctors wish there was a single panacea for every disease, but sadly there is not." },
+  { word: "paradigm", type: "n.", meaning: "an example that is a perfect pattern or model", example: "Because the new SUV was so popular, it became the paradigm upon which all others were modeled." },
+  { word: "paradox", type: "n.", meaning: "an apparently contradictory statement that is perhaps true", example: "The diplomat refused to acknowledge the paradox that negotiating a peace treaty would demand more resources than waging war." },
+  { word: "paragon", type: "n.", meaning: "a model of excellence or perfection", example: "The mythical Helen of Troy was considered a paragon of female beauty." },
+  { word: "parsimony", type: "n.", meaning: "frugality, stinginess", example: "Many relatives believed that my aunt's wealth resulted from her parsimony." },
+  { word: "pathos", type: "n.", meaning: "an emotion of sympathy", example: "Martha filled with pathos upon discovering the scrawny, shivering kitten at her door." },
+  { word: "pejorative", type: "adj.", meaning: "derogatory, uncomplimentary", example: "The evening's headline news covered an international scandal caused by a pejorative statement the famous senator had made." },
+  { word: "penitent", type: "adj.", meaning: "remorseful, regretful", example: "The jury's verdict may have been more lenient if the criminal had appeared penitent for his gruesome crimes." },
+  { word: "penurious", type: "adj.", meaning: "miserly, stingy", example: "Stella complained that her husband's penurious ways made it impossible to live the lifestyle she felt she deserved." },
+  { word: "perfidious", type: "adj.", meaning: "disloyal, unfaithful", example: "After the official was caught selling government secrets to enemy agents, he was executed for his perfidious ways." },
+  { word: "perfunctory", type: "adj.", meaning: "showing little interest or enthusiasm", example: "The radio broadcaster announced the news of the massacre in a surprisingly perfunctory manner." },
+  { word: "pernicious", type: "adj.", meaning: "extremely destructive or harmful", example: "The new government feared that the Communist sympathizers would have a pernicious influence on the nation's stability." },
+  { word: "perspicacity", type: "n.", meaning: "shrewdness, perceptiveness", example: "The detective was too humble to acknowledge that his perspicacity was the reason for his professional success." },
+  { word: "pertinacious", type: "adj.", meaning: "stubbornly persistent", example: "Harry's parents were frustrated with his pertinacious insistence that a monster lived in his closet." },
+  { word: "petulance", type: "n.", meaning: "rudeness, irritability", example: "The Nanny resigned after she could no longer tolerate the child's petulance." },
+  { word: "philanthropic", type: "adj.", meaning: "charitable, giving", example: "Many people felt that the billionaire's decision to donate her fortune to house the homeless was the ultimate philanthropic act." },
+  { word: "phlegmatic", type: "adj.", meaning: "uninterested, unresponsive", example: "Monique feared her dog was ill after the animal's phlegmatic response to his favorite chew toy." },
+  { word: "pithy", type: "adj.", meaning: "concisely meaningful", example: "My father's long-winded explanation was a stark contrast to his usually pithy statements." },
+  { word: "placate", type: "v.", meaning: "to ease the anger of, soothe", example: "The man purchased a lollipop to placate his irritable son." },
+  { word: "platitude", type: "n.", meaning: "an uninspired remark, cliché", example: "After reading over her paper, Helene concluded that what she thought were profound insights were actually just platitudes." },
+  { word: "plausible", type: "adj.", meaning: "believable, reasonable", example: "He studied all the data and then came up with a plausible theory that took all factors into account." },
+  { word: "poignant", type: "adj.", meaning: "deeply affecting, moving", example: "My teacher actually cried after reading to us the poignant final chapter of the novel." },
+  { word: "pragmatic", type: "adj.", meaning: "practical", example: "The politician argued that increased security measures were a pragmatic necessity to ensure everyone's safety." },
+  { word: "preclude", type: "v.", meaning: "to prevent", example: "My grandfather's large and vicious guard dog precluded anyone from entering the yard." },
+  { word: "precocious", type: "adj.", meaning: "advanced, developing ahead of time", example: "Derek was so academically precocious that by the time he was 10 years old, he was already in the ninth grade." },
+  { word: "prescient", type: "adj.", meaning: "to have foreknowledge of events", example: "Questioning the fortune cookie's prediction, Ray went in search of the old hermit who was rumored to be prescient." },
+  { word: "presumptuous", type: "adj.", meaning: "disrespectfully bold", example: "The princess grew angry after the presumptuous noble tried to kiss her." },
+  { word: "proclivity", type: "n.", meaning: "a strong inclination toward something", example: "In a sick twist of fate, Harold's childhood proclivity for torturing small animals grew into a desire to become a surgeon." },
+  { word: "profuse", type: "adj.", meaning: "plentiful, abundant", example: "The fans were profuse in their cheers for the star basketball player." },
+  { word: "propensity", type: "n.", meaning: "an inclination, preference", example: "Dermit has a propensity for dangerous activities such as bungee jumping." },
+  { word: "propitious", type: "adj.", meaning: "favorable", example: "The dark storm clouds visible on the horizon suggested that the weather would not be propitious for sailing." },
+  { word: "proscribe", type: "v.", meaning: "to condemn, outlaw", example: "The town council voted to proscribe the sale of alcohol on weekends." },
+  { word: "prudence", type: "n.", meaning: "cautious, circumspect", example: "After losing a fortune in a stock market crash, my father vowed to practice greater prudence in future investments." },
+  { word: "puerile", type: "adj.", meaning: "juvenile, immature", example: "The judge demanded order after the lawyer's puerile attempt to object by stomping his feet on the courtroom floor." },
+  { word: "pugnacious", type: "adj.", meaning: "quarrelsome, combative", example: "Aaron's pugnacious nature led him to start several barroom brawls each month." },
+  { word: "quagmire", type: "n.", meaning: "a difficult situation", example: "We'd all like to avoid the kind of military quagmire characterized by the Vietnam War." },
+  { word: "quandary", type: "n.", meaning: "a perplexed, unresolvable state", example: "Carlos found himself in a quandary: should he choose mint chocolate chip or cookie dough?" },
+  { word: "querulous", type: "adj.", meaning: "whiny, complaining", example: "If deprived of his pacifier, young Brendan becomes querulous." },
+  { word: "quixotic", type: "adj.", meaning: "idealistic, impractical", example: "Edward entertained a quixotic desire to fall in love at first sight in a laundromat." },
+  { word: "rancor", type: "n.", meaning: "deep, bitter resentment", example: "When Eileen challenged me to a fight, I could see the rancor in her eyes." },
+  { word: "raucous", type: "adj.", meaning: "loud, boisterous", example: "Sarah's neighbors called the cops when her house party got too raucous." },
+  { word: "recalcitrant", type: "adj.", meaning: "defiant, unapologetic", example: "Even when scolded, the recalcitrant young girl simply stomped her foot and refused to finish her lima beans." },
+  { word: "rectitude", type: "n.", meaning: "uprightness, extreme morality", example: "The priest's rectitude gave him the moral authority to counsel his parishioners." },
+  { word: "reprehensible", type: "adj.", meaning: "deserving rebuke", example: "Jean's cruel and reprehensible attempt to dump her boyfriend on his birthday led to tears and recriminations." },
+  { word: "resilient", type: "adj.", meaning: "able to recover from misfortune; able to withstand adversity", example: "The resilient ballplayer quickly recovered from his wrist injury." },
+  { word: "resolute", type: "adj.", meaning: "firm, determined", example: "With a resolute glint in her eye, Catherine announced that she was set on going to college in New York City." },
+  { word: "respite", type: "n.", meaning: "a break, rest", example: "Justin left the pub to gain a brief respite from the smoke and noise." },
+  { word: "restitution", type: "n.", meaning: "restoration to the rightful owner", example: "Many people feel that descendants of slaves should receive restitution for the sufferings of their ancestors." },
+  { word: "sagacity", type: "n.", meaning: "shrewdness, soundness of perspective", example: "With remarkable sagacity, the wise old man predicted and thwarted his children's plan to ship him off to a nursing home." },
+  { word: "salient", type: "adj.", meaning: "significant, conspicuous", example: "One of the salient differences between Alison and Nancy is that Alison is a foot taller." },
+  { word: "sanctimonious", type: "adj.", meaning: "giving a hypocritical appearance of piety", example: "The sanctimonious Bertrand delivered stern lectures on the Ten Commandments, but thought nothing of stealing cars to make some cash." },
+  { word: "sanguine", type: "adj.", meaning: "optimistic, cheery", example: "Polly reacted to any bad news with a sanguine smile and the chirpy cry, 'When life hands you lemons, make lemonade!'" },
+  { word: "scrupulous", type: "adj.", meaning: "painstaking, careful", example: "With scrupulous care, Sam cut a snowflake out of white paper." },
+  { word: "sedentary", type: "adj.", meaning: "sitting, settled", example: "The sedentary cat did little but loll in the sun." },
+  { word: "seminal", type: "adj.", meaning: "original, important, creating a field", example: "Stephen Greenblatt's essays on Shakespeare proved to be seminal, because they initiated the critical school of New Historicism." },
+  { word: "serendipity", type: "n.", meaning: "luck, finding good things without looking for them", example: "In an amazing bit of serendipity, penniless Paula found a $20 bill in the subway station." },
+  { word: "servile", type: "adj.", meaning: "subservient", example: "The servile porter crept around the hotel lobby, bowing and quaking before the guests." },
+  { word: "solicitous", type: "adj.", meaning: "concerned, attentive", example: "Jim, laid up in bed with a nasty virus, enjoyed the solicitous attentions of his mother, who brought him soup and extra blankets." },
+  { word: "somnolent", type: "adj.", meaning: "sleepy, drowsy", example: "The somnolent student kept falling asleep and waking up with a jerk." },
+  { word: "spurious", type: "adj.", meaning: "false but designed to seem plausible", example: "Using a spurious argument, John convinced the others that he had won the board game on a technicality." },
+  { word: "stagnate", type: "v.", meaning: "to become or remain inactive, not develop, not flow", example: "With no room for advancement, the waiter's career stagnated." },
+  { word: "stoic", type: "adj.", meaning: "unaffected by passion or feeling", example: "Penelope's faithfulness to Odysseus required that she be stoic and put off her many suitors." },
+  { word: "strident", type: "adj.", meaning: "harsh, loud", example: "A strident man, Captain Von Trapp yelled at his daughter and made her cry." },
+  { word: "stupefy", type: "v.", meaning: "to astonish, make insensible", example: "Veronica's audacity and ungratefulness stupefied her best friend, Heather." },
+  { word: "subjugate", type: "v.", meaning: "to bring under control, subdue", example: "The invading force captured and subjugated the natives of that place." },
+  { word: "succinct", type: "adj.", meaning: "marked by compact precision", example: "The governor's succinct speech energized the crowd while the mayor's rambled on and on." },
+  { word: "superfluous", type: "adj.", meaning: "exceeding what is necessary", example: "Tracy had already won the campaign so her constant flattery of others was superfluous." },
+  { word: "sycophant", type: "n.", meaning: "one who flatters for self-gain", example: "Some see the people in the cabinet as the president's closest advisors, but others see them as sycophants." },
+  { word: "tacit", type: "adj.", meaning: "expressed without words", example: "I interpreted my parents' refusal to talk as a tacit acceptance of my request." },
+  { word: "taciturn", type: "adj.", meaning: "not inclined to talk", example: "Though Jane never seems to stop talking, her brother is quite taciturn." },
+  { word: "tangential", type: "adj.", meaning: "incidental, peripheral, divergent", example: "I tried to discuss my salary, but the boss kept veering off into tangential topics." },
+  { word: "temerity", type: "n.", meaning: "audacity, recklessness", example: "Tom and Huck entered the scary cave armed with nothing but their own temerity." },
+  { word: "tenuous", type: "adj.", meaning: "having little substance or strength", example: "Your argument is very tenuous, since it relies so much on speculation and hearsay." },
+  { word: "timorous", type: "adj.", meaning: "timid, fearful", example: "When dealing with the unknown, timorous Tallulah almost always broke into tears." },
+  { word: "torpid", type: "adj.", meaning: "lethargic, dormant, lacking motion", example: "The torpid whale floated, wallowing in the water for hours." },
+  { word: "tractable", type: "adj.", meaning: "easily controlled", example: "The horse was so tractable, Myra didn't even need a bridle." },
+  { word: "transgress", type: "v.", meaning: "to violate, go over a limit", example: "The criminal's actions transgressed morality and human decency." },
+  { word: "transient", type: "adj.", meaning: "passing through briefly; passing into and out of existence", example: "Because virtually everyone in Palm Beach is a tourist, the population of the town is quite transient." },
+  { word: "trepidation", type: "n.", meaning: "fear, apprehension", example: "Feeling great trepidation, Anya refused to jump into the pool because she thought she saw a shark in it." },
+  { word: "trite", type: "adj.", meaning: "not original, overused", example: "Keith thought of himself as being very learned, but everyone else thought he was trite because his observations were always the same as David Letterman's." },
+  { word: "truculent", type: "adj.", meaning: "ready to fight, cruel", example: "This club doesn't really attract the dangerous types, so why was that bouncer being so truculent?" },
+  { word: "turbid", type: "adj.", meaning: "swollen, excessively embellished in style or language", example: "The haughty writer did not realize how we all really felt about his turgid prose." },
+  { word: "ubiquitous", type: "adj.", meaning: "existing everywhere, widespread", example: "It seems that everyone in the United States has a television. The technology is ubiquitous here." },
+  { word: "umbrage", type: "n.", meaning: "resentment, offense", example: "He called me a lily-livered coward, and I took umbrage at the insult." },
+  { word: "unctuous", type: "adj.", meaning: "smooth or greasy in texture, appearance, manner", example: "The unctuous receptionist seemed untrustworthy, as if she was only being helpful because she thought we might give her a big tip." },
+  { word: "usurp", type: "v.", meaning: "to seize by force, take possession of without right", example: "The rogue army general tried to usurp control of the government, but he failed." },
+  { word: "vacillate", type: "v.", meaning: "to fluctuate, hesitate", example: "I prefer a definite answer, but my boss kept vacillating between the distinct options available to us." },
+  { word: "vacuous", type: "adj.", meaning: "lack of content or ideas, stupid", example: "Beyonce realized that the lyrics she had just penned were completely vacuous and tried to add more substance." },
+  { word: "vapid", type: "adj.", meaning: "lacking liveliness, dull", example: "The professor's comments about the poem were surprisingly vapid and dull." },
+  { word: "venerable", type: "adj.", meaning: "deserving of respect because of age or achievement", example: "The venerable Supreme Court justice had made several key rulings in landmark cases throughout the years." },
+  { word: "veracity", type: "n.", meaning: "truthfulness, accuracy", example: "With several agencies regulating the reports, it was difficult for Latifah to argue against its veracity." },
+  { word: "verbose", type: "adj.", meaning: "wordy, impaired by wordiness", example: "It took the verbose teacher two hours to explain the topic, while it should have taken only fifteen minutes." },
+  { word: "vicarious", type: "adj.", meaning: "experiencing through another", example: "All of my lame friends learned to be social through vicarious involvement in my amazing experiences." },
+  { word: "vigilant", type: "adj.", meaning: "watchful, alert", example: "The guards remained vigilant throughout the night, but the enemy never launched the expected attack." },
+  { word: "vilify", type: "v.", meaning: "to lower in importance, defame", example: "After the Watergate scandal, almost any story written about President Nixon sought to vilify him." },
+  { word: "vindicate", type: "v.", meaning: "to avenge; to free from allegation; to set free", example: "The attorney had no chance of vindicating the defendant with all of the strong evidence presented by the state." },
+  { word: "vindictive", type: "adj.", meaning: "vengeful", example: "The vindictive madman seeks to exact vengeance for any insult that he perceives is directed at him." },
+  { word: "vitriolic", type: "adj.", meaning: "having a caustic quality", example: "When angry, the woman would spew vitriolic insults." },
+  { word: "vivacious", type: "adj.", meaning: "lively, sprightly", example: "The vivacious clown makes all of the children laugh and giggle with his friendly antics." },
+  { word: "vociferous", type: "adj.", meaning: "loud, boisterous", example: "I'm tired of his vociferous whining so I'm breaking up with him." },
+  { word: "wanton", type: "adj.", meaning: "undisciplined, lewd, lustful", example: "Vicky's wanton demeanor often made the frat guys next door very excited." },
+  { word: "whimsical", type: "adj.", meaning: "fanciful, full of whims", example: "The whimsical little girl liked to pretend that she was an elvin princess." },
+  { word: "wistful", type: "adj.", meaning: "full of yearning; musingly sad", example: "Since her pet rabbit died, Edda missed it terribly and sat around wistful all day long." },
+  { word: "zealous", type: "adj.", meaning: "fervent, filled with eagerness in pursuit of something", example: "If he were any more zealous about getting his promotion, he'd practically live at the office." },
+  { word: "zenith", type: "n.", meaning: "the highest point, culminating point", example: "I was too nice to tell Nelly that she had reached the absolute zenith of her career with that one hit of hers." },
+];
+
+// ─── UTILS ────────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getDayIndex() {
+  const start = new Date("2024-01-01");
+  const now = new Date();
+  return Math.floor((now - start) / (1000 * 60 * 60 * 24));
+}
+
+function getDailyWords(learnedIndices = []) {
+  const dayIdx = getDayIndex();
+  const available = SAT_WORDS.filter((_, i) => !learnedIndices.includes(i));
+  const seed = dayIdx * 12;
+  const slice = [];
+  for (let i = 0; i < 12 && i < available.length; i++) {
+    slice.push(available[(seed + i * 7) % available.length]);
+  }
+  return slice;
+}
+
+function speak(word) {
+  if ("speechSynthesis" in window) {
+    const u = new SpeechSynthesisUtterance(word);
+    u.lang = "en-US";
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }
+}
+
+function genQuizQuestion(word, allWords) {
+  const types = ["mcq", "fill", "sentence"];
+  const type = types[Math.floor(Math.random() * types.length)];
+  const distractors = shuffle(allWords.filter(w => w.word !== word.word)).slice(0, 3);
+
+  if (type === "mcq") {
+    const options = shuffle([word, ...distractors]);
+    return {
+      type: "mcq",
+      prompt: `What is the meaning of "${word.word}"?`,
+      word,
+      options: options.map(o => o.meaning),
+      answer: word.meaning,
+    };
+  } else if (type === "fill") {
+    const blanked = word.example.replace(new RegExp(word.word, "gi"), "_____");
+    return {
+      type: "fill",
+      prompt: `Fill in the blank: "${blanked}"`,
+      word,
+      answer: word.word.toLowerCase(),
+    };
+  } else {
+    const options = shuffle([word, ...distractors]);
+    return {
+      type: "sentence",
+      prompt: `Which word fits best in this sentence?\n"${word.example.replace(new RegExp(word.word, "gi"), "_____")}"`,
+      word,
+      options: options.map(o => o.word),
+      answer: word.word,
+    };
+  }
+}
+
+// ─── STORAGE ─────────────────────────────────────────────────────────────
+function loadState() {
+  try {
+    const raw = sessionStorage.getItem("satApp");
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function saveState(s) {
+  try { sessionStorage.setItem("satApp", JSON.stringify(s)); } catch {}
+}
+
+const INITIAL_STATE = {
+  screen: "login",
+  users: [
+    { id: "u1", name: "Alex", email: "alex@sat.com", password: "1234", avatar: "AX", color: "#6366f1" },
+    { id: "u2", name: "Jordan", email: "jordan@sat.com", password: "1234", avatar: "JD", color: "#ec4899" },
+  ],
+  currentUser: null,
+  room: {
+    id: "room1",
+    members: ["u1", "u2"],
+    scores: { u1: 0, u2: 0 },
+    streaks: { u1: 3, u2: 5 },
+    learnedWordIndices: [],
+    mistakes: [],
+    weeklyPoints: { u1: 47, u2: 62 },
+    lastActivity: {},
+    chat: [
+      { from: "u2", text: "Ready for today's words? 🔥", time: "9:02 AM" },
+      { from: "u1", text: "Let's go! I'll beat you this time 😤", time: "9:05 AM" },
+    ],
+  },
+};
+
+// ─── COMPONENTS ──────────────────────────────────────────────────────────
+
+function Avatar({ name, color, size = 36 }) {
+  const initials = name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase();
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%",
+      background: color + "22", border: `2px solid ${color}55`,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: size * 0.35, fontWeight: 600, color, fontFamily: "'Syne', sans-serif",
+      flexShrink: 0,
+    }}>{initials}</div>
+  );
+}
+
+function XPBar({ current, max, color }) {
+  const pct = Math.min(100, Math.round((current / max) * 100));
+  return (
+    <div style={{ background: "#ffffff10", borderRadius: 99, height: 6, overflow: "hidden" }}>
+      <div style={{
+        height: "100%", width: `${pct}%`,
+        background: `linear-gradient(90deg, ${color}88, ${color})`,
+        borderRadius: 99, transition: "width 0.6s cubic-bezier(.4,0,.2,1)",
+      }} />
+    </div>
+  );
+}
+
+function Badge({ text, color = "#6366f1" }) {
+  return (
+    <span style={{
+      background: color + "22", color, border: `1px solid ${color}44`,
+      borderRadius: 99, padding: "2px 10px", fontSize: 11, fontWeight: 600,
+      letterSpacing: "0.04em", textTransform: "uppercase",
+    }}>{text}</span>
+  );
+}
+
+// ─── SCREENS ────────────────────────────────────────────────────────────
+
+function LoginScreen({ state, setState }) {
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
+  const [err, setErr] = useState("");
+  const [animIn, setAnimIn] = useState(false);
+
+  useEffect(() => { setTimeout(() => setAnimIn(true), 50); }, []);
+
+  function login() {
+    const user = state.users.find(u => u.email === email && u.password === pass);
+    if (!user) { setErr("Invalid credentials. Try alex@sat.com / 1234"); return; }
+    setState(s => ({ ...s, currentUser: user.id, screen: "home" }));
+  }
+
+  return (
+    <div style={{
+      minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center",
+      background: "#0a0a0f",
+      fontFamily: "'Syne', 'Space Grotesk', sans-serif",
+    }}>
+      {/* Background grid */}
+      <div style={{
+        position: "fixed", inset: 0, zIndex: 0,
+        backgroundImage: "radial-gradient(circle at 20% 50%, #6366f122 0%, transparent 50%), radial-gradient(circle at 80% 20%, #ec489922 0%, transparent 50%)",
+        pointerEvents: "none",
+      }} />
+      <div style={{
+        position: "relative", zIndex: 1,
+        opacity: animIn ? 1 : 0, transform: animIn ? "translateY(0)" : "translateY(24px)",
+        transition: "all 0.6s cubic-bezier(.4,0,.2,1)",
+        width: "100%", maxWidth: 400, padding: "0 20px",
+      }}>
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ fontSize: 48, marginBottom: 8 }}>📚</div>
+          <h1 style={{ color: "#fff", fontSize: 32, fontWeight: 700, margin: 0, letterSpacing: "-0.02em" }}>
+            VocabDuo
+          </h1>
+          <p style={{ color: "#ffffff66", fontSize: 14, margin: "8px 0 0" }}>
+            SAT vocabulary — better together
+          </p>
+        </div>
+
+        <div style={{
+          background: "#ffffff08", border: "1px solid #ffffff15",
+          borderRadius: 20, padding: 32,
+          backdropFilter: "blur(20px)",
+        }}>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ color: "#ffffff88", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>Email</label>
+            <input
+              value={email} onChange={e => setEmail(e.target.value)}
+              placeholder="alex@sat.com"
+              style={{
+                width: "100%", marginTop: 6, padding: "12px 14px",
+                background: "#ffffff0c", border: "1px solid #ffffff20",
+                borderRadius: 10, color: "#fff", fontSize: 15,
+                outline: "none", boxSizing: "border-box",
+                fontFamily: "inherit",
+              }}
+            />
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ color: "#ffffff88", fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>Password</label>
+            <input
+              type="password" value={pass} onChange={e => setPass(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && login()}
+              placeholder="••••••••"
+              style={{
+                width: "100%", marginTop: 6, padding: "12px 14px",
+                background: "#ffffff0c", border: "1px solid #ffffff20",
+                borderRadius: 10, color: "#fff", fontSize: 15,
+                outline: "none", boxSizing: "border-box",
+                fontFamily: "inherit",
+              }}
+            />
+          </div>
+          {err && <div style={{ color: "#f87171", fontSize: 13, marginBottom: 12 }}>{err}</div>}
+          <button onClick={login} style={{
+            width: "100%", padding: "13px", borderRadius: 10,
+            background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+            border: "none", color: "#fff", fontSize: 16, fontWeight: 700,
+            cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.02em",
+          }}>
+            Sign In
+          </button>
+          <div style={{ textAlign: "center", marginTop: 20, color: "#ffffff44", fontSize: 12 }}>
+            Demo: alex@sat.com / 1234 &nbsp;·&nbsp; jordan@sat.com / 1234
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HomeScreen({ state, setState }) {
+  const user = state.users.find(u => u.id === state.currentUser);
+  const partner = state.users.find(u => u.id !== state.currentUser);
+  const room = state.room;
+  const myScore = room.scores[user.id] || 0;
+  const partnerScore = room.scores[partner.id] || 0;
+  const myStreak = room.streaks[user.id] || 0;
+  const myWeekly = room.weeklyPoints[user.id] || 0;
+  const partnerWeekly = room.weeklyPoints[partner.id] || 0;
+  const totalWords = SAT_WORDS.length;
+  const learnedCount = room.learnedWordIndices.length;
+  const mistakesCount = room.mistakes.length;
+  const dailyWords = getDailyWords(room.learnedWordIndices);
+
+  const tiles = [
+    { icon: "📖", label: "Today's Words", sub: `${dailyWords.length} new words`, screen: "daily", color: "#6366f1" },
+    { icon: "⚡", label: "Quiz Battle", sub: "Challenge your partner", screen: "quiz", color: "#ec4899" },
+    { icon: "❌", label: "Mistakes", sub: `${mistakesCount} to review`, screen: "mistakes", color: "#f59e0b" },
+    { icon: "🔁", label: "Revision", sub: "Spaced repetition", screen: "revision", color: "#10b981" },
+    { icon: "💬", label: "Chat", sub: `${room.chat.length} messages`, screen: "chat", color: "#06b6d4" },
+    { icon: "🏆", label: "Leaderboard", sub: "Weekly rankings", screen: "leaderboard", color: "#a855f7" },
+  ];
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#0a0a0f", fontFamily: "'Syne', sans-serif", color: "#fff" }}>
+      {/* Header */}
+      <div style={{
+        padding: "20px 20px 0", display: "flex", alignItems: "center", justifyContent: "space-between",
+        maxWidth: 600, margin: "0 auto",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <Avatar name={user.name} color={user.color} size={40} />
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 16 }}>Hey, {user.name}! 👋</div>
+            <div style={{ color: "#ffffff55", fontSize: 12 }}>🔥 {myStreak} day streak</div>
+          </div>
+        </div>
+        <button onClick={() => setState(s => ({ ...s, screen: "login", currentUser: null }))}
+          style={{ background: "#ffffff10", border: "1px solid #ffffff20", color: "#ffffff88", borderRadius: 8, padding: "6px 14px", cursor: "pointer", fontSize: 13 }}>
+          Sign out
+        </button>
+      </div>
+
+      {/* Study room banner */}
+      <div style={{ padding: "20px 20px 0", maxWidth: 600, margin: "0 auto" }}>
+        <div style={{
+          background: "linear-gradient(135deg, #6366f122, #ec489922)",
+          border: "1px solid #ffffff15", borderRadius: 16, padding: "16px 20px",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Avatar name={user.name} color={user.color} size={32} />
+            <div style={{ color: "#ffffff60", fontSize: 20 }}>⚔️</div>
+            <Avatar name={partner.name} color={partner.color} size={32} />
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontWeight: 700, fontSize: 20, letterSpacing: "-0.03em" }}>
+              {myScore} <span style={{ color: "#ffffff40" }}>vs</span> {partnerScore}
+            </div>
+            <div style={{ color: "#ffffff55", fontSize: 11 }}>All-time battle score</div>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 13, color: "#ffffff88" }}>Progress</div>
+            <div style={{ fontSize: 18, fontWeight: 700 }}>{learnedCount}/{totalWords}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div style={{ padding: "16px 20px 0", maxWidth: 600, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+        {[
+          { label: "My weekly pts", value: myWeekly, color: "#6366f1" },
+          { label: `${partner.name}'s pts`, value: partnerWeekly, color: partner.color },
+          { label: "Words left", value: totalWords - learnedCount, color: "#10b981" },
+        ].map((s, i) => (
+          <div key={i} style={{ background: "#ffffff08", border: "1px solid #ffffff12", borderRadius: 12, padding: "12px" }}>
+            <div style={{ color: "#ffffff55", fontSize: 11, marginBottom: 4 }}>{s.label}</div>
+            <div style={{ color: s.color, fontWeight: 700, fontSize: 22 }}>{s.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Nav tiles */}
+      <div style={{ padding: "20px", maxWidth: 600, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+        {tiles.map(t => (
+          <button key={t.screen} onClick={() => setState(s => ({ ...s, screen: t.screen }))}
+            style={{
+              background: "#ffffff08", border: `1px solid ${t.color}33`,
+              borderRadius: 16, padding: "20px 18px", textAlign: "left",
+              cursor: "pointer", transition: "all 0.15s",
+              position: "relative", overflow: "hidden",
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = "#ffffff12"}
+            onMouseLeave={e => e.currentTarget.style.background = "#ffffff08"}
+          >
+            <div style={{ fontSize: 28, marginBottom: 8 }}>{t.icon}</div>
+            <div style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>{t.label}</div>
+            <div style={{ color: "#ffffff55", fontSize: 12, marginTop: 2 }}>{t.sub}</div>
+            <div style={{
+              position: "absolute", bottom: -10, right: -10,
+              width: 60, height: 60, borderRadius: "50%",
+              background: t.color + "18",
+            }} />
+          </button>
+        ))}
+      </div>
+
+      {/* XP toward next milestone */}
+      <div style={{ padding: "0 20px 30px", maxWidth: 600, margin: "0 auto" }}>
+        <div style={{ background: "#ffffff08", border: "1px solid #ffffff12", borderRadius: 12, padding: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+            <span style={{ fontSize: 13, color: "#ffffff88" }}>Weekly XP Progress</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#6366f1" }}>{myWeekly}/100</span>
+          </div>
+          <XPBar current={myWeekly} max={100} color="#6366f1" />
+          <div style={{ color: "#ffffff44", fontSize: 11, marginTop: 6 }}>{100 - myWeekly} XP until next badge</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DailyWordsScreen({ state, setState }) {
+  const room = state.room;
+  const dailyWords = getDailyWords(room.learnedWordIndices);
+  const [flipped, setFlipped] = useState({});
+  const [learned, setLearned] = useState({});
+  const [currentIdx, setCurrentIdx] = useState(0);
+
+  function toggleFlip(i) {
+    setFlipped(f => ({ ...f, [i]: !f[i] }));
+  }
+
+  function markLearned(word) {
+    const idx = SAT_WORDS.findIndex(w => w.word === word.word);
+    setLearned(l => ({ ...l, [word.word]: true }));
+    setState(s => ({
+      ...s,
+      room: {
+        ...s.room,
+        learnedWordIndices: [...new Set([...s.room.learnedWordIndices, idx])],
+        scores: {
+          ...s.room.scores,
+          [s.currentUser]: (s.room.scores[s.currentUser] || 0) + 1,
+        },
+        weeklyPoints: {
+          ...s.room.weeklyPoints,
+          [s.currentUser]: (s.room.weeklyPoints[s.currentUser] || 0) + 1,
+        }
+      }
+    }));
+  }
+
+  const word = dailyWords[currentIdx];
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#0a0a0f", fontFamily: "'Syne', sans-serif", color: "#fff" }}>
+      <div style={{ maxWidth: 600, margin: "0 auto", padding: 20 }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+          <button onClick={() => setState(s => ({ ...s, screen: "home" }))}
+            style={{ background: "#ffffff10", border: "1px solid #ffffff20", color: "#fff", borderRadius: 8, padding: "8px 14px", cursor: "pointer" }}>
+            ← Back
+          </button>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Today's Words</h2>
+            <p style={{ margin: 0, color: "#ffffff55", fontSize: 12 }}>{dailyWords.length} words • click cards to flip</p>
+          </div>
+        </div>
+
+        {/* Progress */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 12, color: "#ffffff66" }}>
+            <span>Card {currentIdx + 1} of {dailyWords.length}</span>
+            <span>{Object.keys(learned).length} learned today</span>
+          </div>
+          <XPBar current={currentIdx + 1} max={dailyWords.length} color="#6366f1" />
+        </div>
+
+        {/* Flashcard */}
+        {word && (
+          <div style={{ marginBottom: 20 }}>
+            <div
+              onClick={() => toggleFlip(currentIdx)}
+              style={{
+                background: flipped[currentIdx]
+                  ? "linear-gradient(135deg, #1a1a2e, #16213e)"
+                  : "linear-gradient(135deg, #0f0f1a, #1a1a2e)",
+                border: `1px solid ${flipped[currentIdx] ? "#6366f144" : "#ffffff15"}`,
+                borderRadius: 20, padding: "40px 32px", cursor: "pointer",
+                minHeight: 200, transition: "all 0.3s",
+                display: "flex", flexDirection: "column", justifyContent: "center",
+                position: "relative",
+              }}
+            >
+              <div style={{ position: "absolute", top: 16, right: 16 }}>
+                <Badge text={word.type} color="#6366f1" />
+              </div>
+              {!flipped[currentIdx] ? (
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 42, fontWeight: 800, letterSpacing: "-0.02em", color: "#fff" }}>
+                    {word.word}
+                  </div>
+                  <div style={{ color: "#ffffff44", fontSize: 13, marginTop: 12 }}>tap to reveal meaning</div>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ fontSize: 14, color: "#6366f1", fontWeight: 700, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>Definition</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.4, marginBottom: 16 }}>{word.meaning}</div>
+                  <div style={{ color: "#ffffff66", fontSize: 13, fontStyle: "italic", lineHeight: 1.5, borderLeft: "3px solid #6366f144", paddingLeft: 12 }}>
+                    "{word.example}"
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Action row */}
+            <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+              <button onClick={() => speak(word.word)} style={{
+                flex: 1, padding: "10px", background: "#ffffff08", border: "1px solid #ffffff15",
+                color: "#fff", borderRadius: 10, cursor: "pointer", fontSize: 13,
+              }}>
+                🔊 Pronounce
+              </button>
+              <button
+                onClick={() => markLearned(word)}
+                disabled={learned[word.word]}
+                style={{
+                  flex: 2, padding: "10px",
+                  background: learned[word.word] ? "#10b98133" : "linear-gradient(135deg, #10b981, #059669)",
+                  border: learned[word.word] ? "1px solid #10b98133" : "none",
+                  color: "#fff", borderRadius: 10, cursor: learned[word.word] ? "default" : "pointer",
+                  fontSize: 13, fontWeight: 700,
+                }}>
+                {learned[word.word] ? "✓ Learned!" : "Mark as Learned ✓"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Navigation */}
+        <div style={{ display: "flex", gap: 10 }}>
+          <button onClick={() => setCurrentIdx(i => Math.max(0, i - 1))} disabled={currentIdx === 0}
+            style={{ flex: 1, padding: "12px", background: "#ffffff08", border: "1px solid #ffffff15", color: currentIdx === 0 ? "#ffffff33" : "#fff", borderRadius: 10, cursor: currentIdx === 0 ? "default" : "pointer", fontSize: 14 }}>
+            ← Prev
+          </button>
+          <button onClick={() => setCurrentIdx(i => Math.min(dailyWords.length - 1, i + 1))} disabled={currentIdx === dailyWords.length - 1}
+            style={{ flex: 1, padding: "12px", background: currentIdx < dailyWords.length - 1 ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "#ffffff08", border: "none", color: "#fff", borderRadius: 10, cursor: currentIdx === dailyWords.length - 1 ? "default" : "pointer", fontSize: 14, fontWeight: 700 }}>
+            Next →
+          </button>
+        </div>
+
+        {/* Word list grid */}
+        <div style={{ marginTop: 24 }}>
+          <div style={{ color: "#ffffff55", fontSize: 12, marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>All Today's Words</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {dailyWords.map((w, i) => (
+              <button key={w.word} onClick={() => setCurrentIdx(i)} style={{
+                padding: "6px 14px", borderRadius: 99,
+                background: i === currentIdx ? "#6366f133" : "#ffffff08",
+                border: `1px solid ${i === currentIdx ? "#6366f166" : "#ffffff15"}`,
+                color: learned[w.word] ? "#10b981" : i === currentIdx ? "#a5b4fc" : "#ffffff88",
+                fontSize: 13, cursor: "pointer",
+              }}>
+                {learned[w.word] ? "✓ " : ""}{w.word}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function QuizScreen({ state, setState }) {
+  const user = state.users.find(u => u.id === state.currentUser);
+  const partner = state.users.find(u => u.id !== state.currentUser);
+  const room = state.room;
+  const [quizState, setQuizState] = useState("lobby"); // lobby | playing | results
+  const [questions, setQuestions] = useState([]);
+  const [qIdx, setQIdx] = useState(0);
+  const [myScore, setMyScore] = useState(0);
+  const [partnerScore, setPartnerScore] = useState(0);
+  const [answered, setAnswered] = useState(null);
+  const [fillInput, setFillInput] = useState("");
+  const [showResult, setShowResult] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(15);
+  const timerRef = useRef(null);
+
+  function startQuiz() {
+    const wordPool = getDailyWords(room.learnedWordIndices);
+    const qs = wordPool.slice(0, 8).map(w => genQuizQuestion(w, SAT_WORDS));
+    setQuestions(qs);
+    setQIdx(0);
+    setMyScore(0);
+    setPartnerScore(0);
+    setAnswered(null);
+    setShowResult(false);
+    setFillInput("");
+    setTimeLeft(15);
+    setQuizState("playing");
+  }
+
+  useEffect(() => {
+    if (quizState !== "playing" || showResult) return;
+    setTimeLeft(15);
+    timerRef.current = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) {
+          clearInterval(timerRef.current);
+          handleTimeout();
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [qIdx, quizState, showResult]);
+
+  function handleTimeout() {
+    if (answered !== null) return;
+    setAnswered("__timeout__");
+    setShowResult(true);
+    const mis = questions[qIdx];
+    const misIdx = SAT_WORDS.findIndex(w => w.word === mis.word.word);
+    setState(s => ({
+      ...s, room: {
+        ...s.room,
+        mistakes: [...s.room.mistakes.filter(m => m.word !== mis.word.word), { ...mis.word, index: misIdx }].slice(-50)
+      }
+    }));
+    setTimeout(() => goNext(), 1800);
+  }
+
+  function submitAnswer(ans) {
+    if (answered !== null) return;
+    clearInterval(timerRef.current);
+    const q = questions[qIdx];
+    const correct = q.type === "fill"
+      ? ans.trim().toLowerCase() === q.answer.toLowerCase()
+      : ans === q.answer;
+    setAnswered(ans);
+    setShowResult(true);
+    if (correct) {
+      setMyScore(s => s + 1);
+      setState(s => ({
+        ...s,
+        room: {
+          ...s.room,
+          scores: { ...s.room.scores, [s.currentUser]: (s.room.scores[s.currentUser] || 0) + 1 },
+          weeklyPoints: { ...s.room.weeklyPoints, [s.currentUser]: (s.room.weeklyPoints[s.currentUser] || 0) + 1 },
+        }
+      }));
+    } else {
+      const misIdx = SAT_WORDS.findIndex(w => w.word === q.word.word);
+      setState(s => ({
+        ...s, room: {
+          ...s.room,
+          mistakes: [...s.room.mistakes.filter(m => m.word !== q.word.word), { ...q.word, index: misIdx }].slice(-50)
+        }
+      }));
+    }
+    // Simulate partner answering
+    const partnerCorrect = Math.random() > 0.45;
+    if (partnerCorrect) setPartnerScore(s => s + 1);
+    setTimeout(() => goNext(), 1800);
+  }
+
+  function goNext() {
+    if (qIdx >= questions.length - 1) {
+      setQuizState("results");
+    } else {
+      setQIdx(i => i + 1);
+      setAnswered(null);
+      setShowResult(false);
+      setFillInput("");
+    }
+  }
+
+  if (quizState === "lobby") return (
+    <div style={{ minHeight: "100vh", background: "#0a0a0f", fontFamily: "'Syne', sans-serif", color: "#fff" }}>
+      <div style={{ maxWidth: 600, margin: "0 auto", padding: 20 }}>
+        <button onClick={() => setState(s => ({ ...s, screen: "home" }))}
+          style={{ background: "#ffffff10", border: "1px solid #ffffff20", color: "#fff", borderRadius: 8, padding: "8px 14px", cursor: "pointer", marginBottom: 24 }}>
+          ← Back
+        </button>
+        <div style={{ textAlign: "center", padding: "40px 0" }}>
+          <div style={{ fontSize: 64, marginBottom: 16 }}>⚡</div>
+          <h2 style={{ fontSize: 28, fontWeight: 800, margin: "0 0 8px" }}>Quiz Battle</h2>
+          <p style={{ color: "#ffffff66", marginBottom: 32 }}>8 questions · 15 seconds each · Live scoring</p>
+          <div style={{ display: "flex", justifyContent: "center", gap: 20, marginBottom: 32 }}>
+            <div style={{ textAlign: "center" }}>
+              <Avatar name={user.name} color={user.color} size={48} />
+              <div style={{ fontSize: 13, marginTop: 6 }}>{user.name}</div>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", fontSize: 24 }}>⚔️</div>
+            <div style={{ textAlign: "center" }}>
+              <Avatar name={partner.name} color={partner.color} size={48} />
+              <div style={{ fontSize: 13, marginTop: 6 }}>{partner.name}</div>
+            </div>
+          </div>
+          <button onClick={startQuiz} style={{
+            padding: "16px 48px", borderRadius: 12,
+            background: "linear-gradient(135deg, #ec4899, #a855f7)",
+            border: "none", color: "#fff", fontSize: 18, fontWeight: 800,
+            cursor: "pointer", letterSpacing: "0.02em",
+          }}>
+            Start Battle!
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (quizState === "results") return (
+    <div style={{ minHeight: "100vh", background: "#0a0a0f", fontFamily: "'Syne', sans-serif", color: "#fff" }}>
+      <div style={{ maxWidth: 600, margin: "0 auto", padding: 20, textAlign: "center" }}>
+        <div style={{ fontSize: 64, marginTop: 40 }}>{myScore > partnerScore ? "🏆" : myScore < partnerScore ? "😤" : "🤝"}</div>
+        <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>
+          {myScore > partnerScore ? "You Won!" : myScore < partnerScore ? `${partner.name} Won!` : "It's a Tie!"}
+        </h2>
+        <div style={{ display: "flex", justifyContent: "center", gap: 24, margin: "32px 0" }}>
+          {[
+            { name: user.name, score: myScore, color: user.color },
+            { name: partner.name, score: partnerScore, color: partner.color },
+          ].map((p, i) => (
+            <div key={i} style={{ background: "#ffffff08", border: `1px solid ${p.color}44`, borderRadius: 16, padding: "20px 32px" }}>
+              <div style={{ color: "#ffffff88", fontSize: 13, marginBottom: 4 }}>{p.name}</div>
+              <div style={{ fontSize: 36, fontWeight: 800, color: p.color }}>{p.score}</div>
+              <div style={{ color: "#ffffff55", fontSize: 12 }}>/ {questions.length}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+          <button onClick={startQuiz} style={{ padding: "12px 32px", borderRadius: 10, background: "linear-gradient(135deg, #ec4899, #a855f7)", border: "none", color: "#fff", fontWeight: 700, cursor: "pointer", fontFamily: "inherit", fontSize: 15 }}>
+            Rematch ⚡
+          </button>
+          <button onClick={() => setState(s => ({ ...s, screen: "home" }))} style={{ padding: "12px 32px", borderRadius: 10, background: "#ffffff10", border: "1px solid #ffffff20", color: "#fff", cursor: "pointer", fontFamily: "inherit", fontSize: 15 }}>
+            Home
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const q = questions[qIdx];
+  const timerPct = (timeLeft / 15) * 100;
+  const timerColor = timeLeft > 8 ? "#10b981" : timeLeft > 4 ? "#f59e0b" : "#ef4444";
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#0a0a0f", fontFamily: "'Syne', sans-serif", color: "#fff" }}>
+      <div style={{ maxWidth: 600, margin: "0 auto", padding: 20 }}>
+        {/* Scoreboard */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Avatar name={user.name} color={user.color} size={28} />
+            <span style={{ fontSize: 20, fontWeight: 800, color: user.color }}>{myScore}</span>
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 12, color: "#ffffff55" }}>Q {qIdx + 1}/{questions.length}</div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: timerColor }}>{timeLeft}s</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 20, fontWeight: 800, color: partner.color }}>{partnerScore}</span>
+            <Avatar name={partner.name} color={partner.color} size={28} />
+          </div>
+        </div>
+
+        {/* Timer bar */}
+        <div style={{ background: "#ffffff10", borderRadius: 99, height: 4, marginBottom: 20, overflow: "hidden" }}>
+          <div style={{ height: "100%", width: `${timerPct}%`, background: timerColor, borderRadius: 99, transition: "width 1s linear, background 0.3s" }} />
+        </div>
+
+        {/* Question */}
+        <div style={{ background: "#ffffff08", border: "1px solid #ffffff15", borderRadius: 16, padding: 24, marginBottom: 20 }}>
+          <Badge text={q.type === "mcq" ? "Multiple Choice" : q.type === "fill" ? "Fill in Blank" : "Word Usage"} color="#ec4899" />
+          <div style={{ fontSize: 18, fontWeight: 600, marginTop: 14, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
+            {q.prompt}
+          </div>
+        </div>
+
+        {/* Answer input */}
+        {q.type === "fill" ? (
+          <div>
+            <input
+              value={fillInput} onChange={e => setFillInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && submitAnswer(fillInput)}
+              disabled={answered !== null}
+              placeholder="Type your answer..."
+              style={{
+                width: "100%", padding: "14px 16px", background: "#ffffff0c",
+                border: "1px solid #ffffff25", borderRadius: 10, color: "#fff",
+                fontSize: 16, marginBottom: 10, outline: "none", boxSizing: "border-box",
+                fontFamily: "inherit",
+              }}
+            />
+            {answered === null && (
+              <button onClick={() => submitAnswer(fillInput)} style={{
+                width: "100%", padding: "13px", borderRadius: 10,
+                background: "linear-gradient(135deg, #ec4899, #a855f7)",
+                border: "none", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 15,
+              }}>Submit</button>
+            )}
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {q.options.map((opt, i) => {
+              let bg = "#ffffff08", border = "#ffffff15", col = "#fff";
+              if (showResult) {
+                if (opt === q.answer) { bg = "#10b98122"; border = "#10b98155"; col = "#34d399"; }
+                else if (opt === answered) { bg = "#ef444422"; border = "#ef444455"; col = "#f87171"; }
+              }
+              return (
+                <button key={i} onClick={() => submitAnswer(opt)} disabled={answered !== null}
+                  style={{
+                    padding: "14px 18px", borderRadius: 10, background: bg,
+                    border: `1px solid ${border}`, color: col, textAlign: "left",
+                    cursor: answered !== null ? "default" : "pointer", fontSize: 14,
+                    transition: "all 0.2s",
+                  }}>
+                  <span style={{ color: "#ffffff44", marginRight: 10 }}>{String.fromCharCode(65 + i)}.</span>
+                  {opt}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {showResult && answered === "__timeout__" && (
+          <div style={{ background: "#f59e0b22", border: "1px solid #f59e0b44", borderRadius: 10, padding: "12px 16px", marginTop: 10, color: "#fbbf24" }}>
+            ⏰ Time's up! The answer was: <strong>{q.answer}</strong>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function MistakesScreen({ state, setState }) {
+  const mistakes = state.room.mistakes;
+  const [revIdx, setRevIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#0a0a0f", fontFamily: "'Syne', sans-serif", color: "#fff" }}>
+      <div style={{ maxWidth: 600, margin: "0 auto", padding: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+          <button onClick={() => setState(s => ({ ...s, screen: "home" }))}
+            style={{ background: "#ffffff10", border: "1px solid #ffffff20", color: "#fff", borderRadius: 8, padding: "8px 14px", cursor: "pointer" }}>
+            ← Back
+          </button>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Mistake Tracker</h2>
+            <p style={{ margin: 0, color: "#ffffff55", fontSize: 12 }}>{mistakes.length} words to review</p>
+          </div>
+        </div>
+
+        {mistakes.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "60px 20px" }}>
+            <div style={{ fontSize: 56 }}>🎉</div>
+            <div style={{ fontSize: 18, fontWeight: 700, marginTop: 12 }}>No mistakes yet!</div>
+            <div style={{ color: "#ffffff55", marginTop: 4 }}>Go take the quiz to test yourself</div>
+          </div>
+        ) : (
+          <>
+            {/* Flashcard for current mistake */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ color: "#ffffff55", fontSize: 12, marginBottom: 8 }}>
+                Reviewing {revIdx + 1} of {mistakes.length}
+              </div>
+              <div
+                onClick={() => setFlipped(f => !f)}
+                style={{
+                  background: flipped ? "#1a0a1e" : "#1a1a0a",
+                  border: `1px solid ${flipped ? "#f59e0b44" : "#ef444444"}`,
+                  borderRadius: 20, padding: "32px", cursor: "pointer", minHeight: 180,
+                  display: "flex", flexDirection: "column", justifyContent: "center",
+                  transition: "all 0.3s",
+                }}
+              >
+                {!flipped ? (
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ color: "#ef4444", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>❌ Missed word</div>
+                    <div style={{ fontSize: 36, fontWeight: 800 }}>{mistakes[revIdx].word}</div>
+                    <div style={{ color: "#ffffff44", fontSize: 13, marginTop: 10 }}>tap to see definition</div>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ color: "#f59e0b", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Definition</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 12 }}>{mistakes[revIdx].meaning}</div>
+                    <div style={{ color: "#ffffff55", fontSize: 13, fontStyle: "italic" }}>"{mistakes[revIdx].example}"</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
+              <button onClick={() => { setRevIdx(i => Math.max(0, i - 1)); setFlipped(false); }}
+                disabled={revIdx === 0}
+                style={{ flex: 1, padding: "11px", background: "#ffffff08", border: "1px solid #ffffff15", color: revIdx === 0 ? "#ffffff33" : "#fff", borderRadius: 10, cursor: revIdx === 0 ? "default" : "pointer" }}>
+                ← Prev
+              </button>
+              <button onClick={() => {
+                const toRemove = mistakes[revIdx].word;
+                setState(s => ({ ...s, room: { ...s.room, mistakes: s.room.mistakes.filter(m => m.word !== toRemove) } }));
+                setRevIdx(i => Math.max(0, i - 1));
+                setFlipped(false);
+              }} style={{ flex: 2, padding: "11px", background: "#10b98122", border: "1px solid #10b98133", color: "#34d399", borderRadius: 10, cursor: "pointer", fontWeight: 700 }}>
+                ✓ Got it!
+              </button>
+              <button onClick={() => { setRevIdx(i => Math.min(mistakes.length - 1, i + 1)); setFlipped(false); }}
+                disabled={revIdx === mistakes.length - 1}
+                style={{ flex: 1, padding: "11px", background: "#ffffff08", border: "1px solid #ffffff15", color: revIdx === mistakes.length - 1 ? "#ffffff33" : "#fff", borderRadius: 10, cursor: revIdx === mistakes.length - 1 ? "default" : "pointer" }}>
+                Next →
+              </button>
+            </div>
+
+            {/* Mistake list */}
+            <div style={{ color: "#ffffff55", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>All mistakes</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {mistakes.map((m, i) => (
+                <button key={m.word} onClick={() => { setRevIdx(i); setFlipped(false); }} style={{
+                  background: i === revIdx ? "#ef444411" : "#ffffff06",
+                  border: `1px solid ${i === revIdx ? "#ef444433" : "#ffffff10"}`,
+                  borderRadius: 10, padding: "12px 16px", textAlign: "left", cursor: "pointer",
+                  display: "flex", justifyContent: "space-between", alignItems: "center",
+                }}>
+                  <span style={{ fontWeight: 700, color: "#fff" }}>{m.word}</span>
+                  <span style={{ color: "#ffffff44", fontSize: 12 }}>{m.type}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function RevisionScreen({ state, setState }) {
+  const learned = state.room.learnedWordIndices.map(i => SAT_WORDS[i]).filter(Boolean);
+  const [quizWords] = useState(() => shuffle(learned).slice(0, Math.min(10, learned.length)));
+  const [qIdx, setQIdx] = useState(0);
+  const [score, setScore] = useState(0);
+  const [answered, setAnswered] = useState(null);
+  const [done, setDone] = useState(false);
+  const [showAns, setShowAns] = useState(false);
+  const questions = quizWords.map(w => genQuizQuestion(w, SAT_WORDS));
+
+  function submit(ans) {
+    if (answered !== null) return;
+    const q = questions[qIdx];
+    const correct = q.type === "fill" ? ans.trim().toLowerCase() === q.answer.toLowerCase() : ans === q.answer;
+    setAnswered(ans);
+    setShowAns(true);
+    if (correct) setScore(s => s + 1);
+    setTimeout(() => {
+      if (qIdx >= questions.length - 1) setDone(true);
+      else { setQIdx(i => i + 1); setAnswered(null); setShowAns(false); }
+    }, 1500);
+  }
+
+  if (learned.length < 4) return (
+    <div style={{ minHeight: "100vh", background: "#0a0a0f", fontFamily: "'Syne', sans-serif", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 56 }}>📚</div>
+        <div style={{ fontSize: 18, fontWeight: 700, marginTop: 12 }}>Learn more words first!</div>
+        <div style={{ color: "#ffffff55", marginTop: 4 }}>You need at least 4 learned words for revision.</div>
+        <button onClick={() => setState(s => ({ ...s, screen: "home" }))} style={{ marginTop: 20, padding: "10px 24px", borderRadius: 8, background: "#ffffff10", border: "1px solid #ffffff20", color: "#fff", cursor: "pointer" }}>← Home</button>
+      </div>
+    </div>
+  );
+
+  if (done) return (
+    <div style={{ minHeight: "100vh", background: "#0a0a0f", fontFamily: "'Syne', sans-serif", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 56 }}>{score >= questions.length * 0.8 ? "🌟" : score >= questions.length * 0.5 ? "👍" : "💪"}</div>
+        <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 4 }}>Revision Complete!</h2>
+        <div style={{ fontSize: 48, fontWeight: 800, color: "#10b981" }}>{score}/{questions.length}</div>
+        <div style={{ color: "#ffffff55", marginTop: 4 }}>{Math.round((score / questions.length) * 100)}% accuracy</div>
+        <button onClick={() => setState(s => ({ ...s, screen: "home" }))} style={{ marginTop: 20, padding: "12px 28px", borderRadius: 10, background: "linear-gradient(135deg, #10b981, #059669)", border: "none", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Back to Home</button>
+      </div>
+    </div>
+  );
+
+  const q = questions[qIdx];
+  const [fillVal, setFillVal] = useState("");
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#0a0a0f", fontFamily: "'Syne', sans-serif", color: "#fff" }}>
+      <div style={{ maxWidth: 600, margin: "0 auto", padding: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+          <button onClick={() => setState(s => ({ ...s, screen: "home" }))}
+            style={{ background: "#ffffff10", border: "1px solid #ffffff20", color: "#fff", borderRadius: 8, padding: "8px 14px", cursor: "pointer" }}>
+            ← Back
+          </button>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Revision Mode 🔁</h2>
+        </div>
+        <div style={{ color: "#ffffff55", fontSize: 12, marginBottom: 4 }}>Q {qIdx + 1} of {questions.length} · Score: {score}</div>
+        <XPBar current={qIdx} max={questions.length} color="#10b981" />
+        <div style={{ background: "#ffffff08", border: "1px solid #ffffff15", borderRadius: 16, padding: 24, margin: "16px 0" }}>
+          <Badge text="Revision" color="#10b981" />
+          <div style={{ fontSize: 17, fontWeight: 600, marginTop: 14, lineHeight: 1.5 }}>{q.prompt}</div>
+        </div>
+        {q.type === "fill" ? (
+          <div>
+            <input value={fillVal} onChange={e => setFillVal(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && submit(fillVal)}
+              disabled={answered !== null} placeholder="Type the word..."
+              style={{ width: "100%", padding: "12px 16px", background: "#ffffff0c", border: "1px solid #ffffff25", borderRadius: 10, color: "#fff", fontSize: 15, outline: "none", boxSizing: "border-box", fontFamily: "inherit", marginBottom: 10 }} />
+            {answered === null && <button onClick={() => submit(fillVal)} style={{ width: "100%", padding: "12px", borderRadius: 10, background: "linear-gradient(135deg, #10b981, #059669)", border: "none", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Submit</button>}
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {q.options.map((opt, i) => {
+              let bg = "#ffffff08", border = "#ffffff15", col = "#fff";
+              if (showAns) {
+                if (opt === q.answer) { bg = "#10b98122"; border = "#10b98155"; col = "#34d399"; }
+                else if (opt === answered) { bg = "#ef444422"; border = "#ef444455"; col = "#f87171"; }
+              }
+              return (
+                <button key={i} onClick={() => submit(opt)} disabled={answered !== null}
+                  style={{ padding: "13px 16px", borderRadius: 10, background: bg, border: `1px solid ${border}`, color: col, textAlign: "left", cursor: answered !== null ? "default" : "pointer", fontSize: 14, transition: "all 0.2s" }}>
+                  <span style={{ color: "#ffffff44", marginRight: 10 }}>{String.fromCharCode(65 + i)}.</span>{opt}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ChatScreen({ state, setState }) {
+  const user = state.users.find(u => u.id === state.currentUser);
+  const partner = state.users.find(u => u.id !== state.currentUser);
+  const [msg, setMsg] = useState("");
+  const chatRef = useRef(null);
+
+  useEffect(() => {
+    if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
+  }, [state.room.chat]);
+
+  function sendMsg() {
+    if (!msg.trim()) return;
+    const now = new Date();
+    const time = now.toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" });
+    setState(s => ({
+      ...s, room: {
+        ...s.room,
+        chat: [...s.room.chat, { from: s.currentUser, text: msg.trim(), time }]
+      }
+    }));
+    setMsg("");
+    // Simulate partner response
+    const responses = [
+      "That's a great word! 📚", "haha, true 😂", "Let's quiz after this 🔥",
+      "Wait till you see tomorrow's words 👀", "I already knew that one 😤",
+      "Adding to my notes rn ✍️", "GG", "Let's go!! 🚀"
+    ];
+    if (Math.random() > 0.4) {
+      setTimeout(() => {
+        const t2 = new Date().toLocaleTimeString("en", { hour: "2-digit", minute: "2-digit" });
+        setState(s => ({
+          ...s, room: {
+            ...s.room,
+            chat: [...s.room.chat, { from: partner.id, text: responses[Math.floor(Math.random() * responses.length)], time: t2 }]
+          }
+        }));
+      }, 1500 + Math.random() * 2000);
+    }
+  }
+
+  const chat = state.room.chat;
+
+  return (
+    <div style={{ height: "100vh", background: "#0a0a0f", fontFamily: "'Syne', sans-serif", color: "#fff", display: "flex", flexDirection: "column" }}>
+      {/* Header */}
+      <div style={{ padding: "16px 20px", borderBottom: "1px solid #ffffff10", display: "flex", alignItems: "center", gap: 12 }}>
+        <button onClick={() => setState(s => ({ ...s, screen: "home" }))}
+          style={{ background: "#ffffff10", border: "1px solid #ffffff20", color: "#fff", borderRadius: 8, padding: "8px 14px", cursor: "pointer" }}>
+          ←
+        </button>
+        <Avatar name={partner.name} color={partner.color} size={36} />
+        <div>
+          <div style={{ fontWeight: 700 }}>{partner.name}</div>
+          <div style={{ color: "#10b981", fontSize: 12 }}>● Online</div>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div ref={chatRef} style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
+        {chat.map((m, i) => {
+          const isMe = m.from === state.currentUser;
+          const sender = state.users.find(u => u.id === m.from);
+          return (
+            <div key={i} style={{ display: "flex", flexDirection: isMe ? "row-reverse" : "row", gap: 8, alignItems: "flex-end" }}>
+              {!isMe && <Avatar name={sender?.name || "?"} color={sender?.color || "#666"} size={28} />}
+              <div style={{ maxWidth: "75%" }}>
+                <div style={{
+                  background: isMe ? "linear-gradient(135deg, #6366f1, #8b5cf6)" : "#ffffff0f",
+                  border: isMe ? "none" : "1px solid #ffffff12",
+                  borderRadius: isMe ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+                  padding: "10px 14px", fontSize: 14, lineHeight: 1.5,
+                }}>
+                  {m.text}
+                </div>
+                <div style={{ color: "#ffffff33", fontSize: 11, marginTop: 3, textAlign: isMe ? "right" : "left" }}>{m.time}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Input */}
+      <div style={{ padding: "12px 20px", borderTop: "1px solid #ffffff10", display: "flex", gap: 10 }}>
+        <input value={msg} onChange={e => setMsg(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && sendMsg()}
+          placeholder="Message..."
+          style={{
+            flex: 1, padding: "12px 16px", background: "#ffffff0c", border: "1px solid #ffffff20",
+            borderRadius: 10, color: "#fff", fontSize: 14, outline: "none", fontFamily: "inherit",
+          }}
+        />
+        <button onClick={sendMsg} style={{
+          padding: "12px 20px", borderRadius: 10,
+          background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+          border: "none", color: "#fff", cursor: "pointer", fontSize: 18,
+        }}>➤</button>
+      </div>
+    </div>
+  );
+}
+
+function LeaderboardScreen({ state, setState }) {
+  const room = state.room;
+  const sorted = [...state.users].sort((a, b) => (room.weeklyPoints[b.id] || 0) - (room.weeklyPoints[a.id] || 0));
+  const leader = sorted[0];
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#0a0a0f", fontFamily: "'Syne', sans-serif", color: "#fff" }}>
+      <div style={{ maxWidth: 600, margin: "0 auto", padding: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+          <button onClick={() => setState(s => ({ ...s, screen: "home" }))}
+            style={{ background: "#ffffff10", border: "1px solid #ffffff20", color: "#fff", borderRadius: 8, padding: "8px 14px", cursor: "pointer" }}>
+            ← Back
+          </button>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Weekly Leaderboard 🏆</h2>
+        </div>
+
+        {/* Winner card */}
+        <div style={{
+          background: "linear-gradient(135deg, #f59e0b22, #a855f722)",
+          border: "1px solid #f59e0b44", borderRadius: 20, padding: "24px",
+          textAlign: "center", marginBottom: 20,
+        }}>
+          <div style={{ fontSize: 40 }}>👑</div>
+          <Avatar name={leader.name} color={leader.color} size={56} />
+          <div style={{ fontSize: 20, fontWeight: 800, marginTop: 8 }}>{leader.name}</div>
+          <div style={{ fontSize: 36, fontWeight: 800, color: "#f59e0b" }}>{room.weeklyPoints[leader.id] || 0}</div>
+          <div style={{ color: "#ffffff55", fontSize: 13 }}>points this week</div>
+          <Badge text="Weekly Champion" color="#f59e0b" />
+        </div>
+
+        {/* Full ranking */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {sorted.map((u, i) => {
+            const isMe = u.id === state.currentUser;
+            const pts = room.weeklyPoints[u.id] || 0;
+            const allTime = room.scores[u.id] || 0;
+            const streak = room.streaks[u.id] || 0;
+            return (
+              <div key={u.id} style={{
+                background: isMe ? "#6366f111" : "#ffffff08",
+                border: `1px solid ${isMe ? "#6366f144" : "#ffffff12"}`,
+                borderRadius: 14, padding: "16px 18px",
+                display: "flex", alignItems: "center", gap: 14,
+              }}>
+                <div style={{ fontSize: 24, width: 32, textAlign: "center" }}>{i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉"}</div>
+                <Avatar name={u.name} color={u.color} size={40} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: 16 }}>{u.name} {isMe && <span style={{ color: "#6366f1", fontSize: 12 }}>(you)</span>}</div>
+                  <div style={{ color: "#ffffff55", fontSize: 12 }}>🔥 {streak} day streak · {allTime} all-time pts</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: u.color }}>{pts}</div>
+                  <div style={{ color: "#ffffff44", fontSize: 11 }}>this week</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Stats comparison */}
+        <div style={{ marginTop: 24 }}>
+          <div style={{ color: "#ffffff55", fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 12 }}>Stats Comparison</div>
+          <div style={{ background: "#ffffff08", border: "1px solid #ffffff12", borderRadius: 14, padding: 16 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 8, alignItems: "center" }}>
+              {[
+                { label: "Weekly Points", key: "weeklyPoints" },
+                { label: "All-Time Score", key: "scores" },
+                { label: "Day Streak", key: "streaks" },
+              ].map(stat => {
+                const u1 = state.users[0], u2 = state.users[1];
+                const v1 = room[stat.key]?.[u1.id] || 0, v2 = room[stat.key]?.[u2.id] || 0;
+                return (
+                  <>
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: u1.color }}>{v1}</div>
+                    </div>
+                    <div style={{ textAlign: "center", color: "#ffffff44", fontSize: 12 }}>{stat.label}</div>
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: u2.color }}>{v2}</div>
+                    </div>
+                  </>
+                );
+              })}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", marginTop: 12, gap: 8 }}>
+              {state.users.map(u => (
+                <div key={u.id} style={{ textAlign: "center", color: "#ffffff55", fontSize: 12 }}>{u.name}</div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── APP ────────────────────────────────────────────────────────────────────
+export default function App() {
+  const [state, setStateRaw] = useState(() => {
+    const saved = loadState();
+    return saved || INITIAL_STATE;
+  });
+
+  const setState = useCallback((updater) => {
+    setStateRaw(prev => {
+      const next = typeof updater === "function" ? updater(prev) : updater;
+      saveState(next);
+      return next;
+    });
+  }, []);
+
+  // Google Fonts
+  useEffect(() => {
+    const link = document.createElement("link");
+    link.href = "https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&display=swap";
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+  }, []);
+
+  const screens = {
+    login: <LoginScreen state={state} setState={setState} />,
+    home: <HomeScreen state={state} setState={setState} />,
+    daily: <DailyWordsScreen state={state} setState={setState} />,
+    quiz: <QuizScreen state={state} setState={setState} />,
+    mistakes: <MistakesScreen state={state} setState={setState} />,
+    revision: <RevisionScreen state={state} setState={setState} />,
+    chat: <ChatScreen state={state} setState={setState} />,
+    leaderboard: <LeaderboardScreen state={state} setState={setState} />,
+  };
+
+  return (
+    <div style={{ margin: 0, padding: 0 }}>
+      {screens[state.screen] || screens.login}
+    </div>
+  );
+}
